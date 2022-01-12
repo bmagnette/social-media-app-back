@@ -1,0 +1,26 @@
+{
+  "localizedLastName": "Magnette",
+  "profilePicture": {
+    "displayImage": "urn:li:digitalmediaAsset:C4D03AQGCh5N5ThEE1Q"
+  },
+  "firstName": {
+    "localized": {
+      "fr_FR": "Baptiste"
+    },
+    "preferredLocale": {
+      "country": "FR",
+      "language": "fr"
+    }
+  },
+  "lastName": {
+    "localized": {
+      "fr_FR": "Magnette"
+    },
+    "preferredLocale": {
+      "country": "FR",
+      "language": "fr"
+    }
+  },
+  "id": "Kutz3wVoTM",
+  "localizedFirstName": "Baptiste"
+}
