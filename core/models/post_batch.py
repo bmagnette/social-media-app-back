@@ -16,3 +16,9 @@ class PostBatch(db.Model):
     created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
     updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
 
+    isScheduled = db.Column(db.Boolean, default=False)
+    schedule_date = db.Column(db.Float, nullable=True)
+    schedule_hour = db.Column(db.Float, nullable=True)
+    schedule_minute = db.Column(db.Float, nullable=True)
+
+

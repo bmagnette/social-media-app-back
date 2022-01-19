@@ -1,5 +1,7 @@
 import os
+from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
@@ -9,6 +11,8 @@ from core.api.category import category_router
 from core.api.oauth2 import oauth2_router
 from core.api.post_batch import batch_router
 from core.extensions import mail, db, cors, scheduler
+from core.helpers.handlers import errors_handlers
+from core.libs.scheduler import post_cron, stripe_update
 from core.models.user import User, UserType
 
 
@@ -17,8 +21,9 @@ def create_app() -> Flask:
 
     project_path = os.path.abspath(os.path.join(dir_path, os.pardir))
     load_dotenv(dotenv_path=project_path + '/.env')
-
-    app = Flask("Insiders", template_folder=os.path.join(dir_path, 'templates'))
+    import logging
+    logging.basicConfig(level=logging.ERROR, format=f'%(asctime)s %(levelname)s : %(message)s')
+    app = Flask("Social Media APP", template_folder=os.path.join(dir_path, 'templates'))
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DEBUG'] = True if os.environ["env"] == 'dev' else False
@@ -27,7 +32,7 @@ def create_app() -> Flask:
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
     app.register_blueprint(batch_router)
-    # errors_handlers(app)
+    errors_handlers(app)
     register_extensions(app)
     register_models(app)
     register_schedulers(app)
@@ -44,12 +49,11 @@ def register_extensions(app: Flask) -> None:
 def register_schedulers(app: Flask) -> None:
     with app.app_context():
         scheduler.start()
-    scheduler.app = app
 
-    def test():
-        print("hello", datetime.now())
-    from datetime import datetime
-    scheduler.add_job(test, 'interval', seconds=60, next_run_time=datetime.now())
+    scheduler.add_job(post_cron, 'interval', [app], seconds=60,
+                      next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
+    scheduler.add_job(stripe_update, 'interval', [], hours=24,
+                      next_run_time=datetime.utcnow().replace(hour=0, minute=30))
 
 
 def register_models(app: Flask) -> None:

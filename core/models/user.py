@@ -1,4 +1,6 @@
 import enum
+import random
+import string
 from datetime import datetime
 
 from core.extensions import db
@@ -46,10 +48,10 @@ class User(db.Model):
     # One to Many
     posted = db.relationship("PostBatch", back_populates="author")
 
-    # sponsor_id = db.Column(db.String, nullable=False,
-    #                        default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
+    sponsor_id = db.Column(db.String, nullable=False,
+                           default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
 
-    # stripe_id = db.Column(db.String, nullable=True)
+    stripe_id = db.Column(db.String, nullable=True)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

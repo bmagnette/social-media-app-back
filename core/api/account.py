@@ -13,11 +13,12 @@ account_router = Blueprint('account', __name__)
 @login_required
 def add_account(current_user: User):
     data = request.get_json()
+
     if data:
-        existing_account = Account.query.filter_by(social_id=data["info"]["id"]).first()
+        existing_account = Account.query.filter_by(social_id=data["social_id"]).first()
         if existing_account:
             return {"message": "Un compte existe déjà"}, 400
-        initiate_account(current_user, data)
+        initiate_account(current_user, **data)
         return {"message": "Le compte vient d'être associé."}, 201
     else:
         return {"message": "Erreur : Aucun compte n'a été associé"}, 400

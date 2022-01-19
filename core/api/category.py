@@ -28,6 +28,11 @@ def add_category(current_user: User):
 def edit_category(current_user: User, _id: int):
     data = request.get_json()
     category = AccountCategory.query.filter_by(id=_id).first_or_404()
+    category.accounts = []
+
+    for account in data["accounts"]:
+        acc = Account.query.filter_by(id=account["id"]).first_or_404()
+        category.accounts.append(acc)
     category.label = data["categoryName"]
     category.description = data["categoryDescription"]
 

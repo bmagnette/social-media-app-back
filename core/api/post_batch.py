@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 
-from core.helpers.handlers import login_required
+from core.helpers.handlers import login_required, to_json, response_wrapper
 from core.libs.post import send_message
+from core.models.account_category import AccountCategory
 from core.models.post import Post
 from core.models.post_batch import PostBatch
 from core.extensions import db
@@ -58,20 +59,37 @@ def edit_batch(current_user: User, _id: int):
 @batch_router.route("/batch/<_id>", methods=["DELETE"])
 @login_required
 def remove_batch(current_user: User, _id: int):
-    """
-    TO IMPLEMENT
-    """
+    batch = PostBatch.query.filter_by(id=_id).first_or_404()
+    db.session.delete(batch)
+    db.session.commit()
+    return response_wrapper('content', [], 200)
 
 
 @batch_router.route("/batch/<_id>", methods=["GET"])
 @login_required
 def read_batch(current_user: User, _id: int):
-    """
-    TO IMPLEMENT
-    """
+    batch = PostBatch.query.filter_by(id=_id).first_or_404()
+    return to_json(batch.__dict__), 200
 
 
-@batch_router.route("/categories/<_id>", methods=["GET"])
+@batch_router.route("/batchs", methods=["GET"])
 @login_required
-def read_categories(current_user: User, _id: int):
-    print("")
+def get_batchs(current_user: User):
+    res = []
+    batchs = PostBatch.query.filter_by(author_id=current_user.id).all()
+    for batch in batchs:
+        posts = Post.query.filter_by(batch_id=batch.id).all()
+        temp_res = to_json(batch.__dict__)
+        temp_res["posts"] = []
+        for post in posts:
+            category = AccountCategory.query.filter_by(id=post.account.category_id).first()
+            if category:
+                category = to_json(category.__dict__)
+                temp_res["category"] = category
+
+            post = to_json(post.__dict__)
+
+            temp_res["posts"].append(post)
+        res.append(temp_res)
+
+    return response_wrapper('content', res, 200)

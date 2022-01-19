@@ -55,9 +55,7 @@ class LinkedInAPI:
         response = requests.post(self.URI_AUTH + '/accessToken', data=data, timeout=30)
         response.raise_for_status()
         response = response.json()
-
-        _access_token, expired_in = response['access_token'], response["expires_in"]
-        return _access_token, expired_in
+        return response['access_token']
 
     def write_post(self, token, payload):
         if not self.account.token:

@@ -1,39 +1,50 @@
 import json
+from enum import Enum
 from functools import wraps
 
-import jwt
-from flask import make_response, request, jsonify, current_app
+from flask import make_response
 from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
 from werkzeug.exceptions import HTTPException
 
-from core.models.account import MediaType
+from core.models.account import MediaType, Account
 from core.models.user import User
 
 
 def errors_handlers(app):
     @app.errorhandler(404)
-    def not_found(error):
-        print(str(error))
-        return {"message": error}, 404
+    def not_found(e):
+        app.logger.error(str(e))
+
+        response = e.get_response()
+        # replace the body with JSON
+        response.data = json.dumps({
+            "code": e.code,
+            "name": e.name,
+            "description": e.description,
+        })
+        response.content_type = "application/json"
+        return response
 
     @app.errorhandler(500)
     def not_found(error):
-        print(str(error))
+        app.logger.error(str(error))
         return {"message": error}, 500
 
     @app.errorhandler(Exception)
     def handle_exception(e):
         if isinstance(e, HTTPException) or isinstance(e, HTTPError):
-            print(str(e))
+            app.logger.error(str(e))
             return {"message": str(e)}, 500
 
 
 def parsing_to_json(o):
-    if isinstance(o, MediaType):
+    if isinstance(o, Enum):
         o = o.value
     if isinstance(o, InstanceState):
         return None
+    if isinstance(o, Account):
+        return o.__dict__
     return o
 
 
@@ -49,9 +60,6 @@ def response_wrapper(content_type, content, http_code):
 def to_json(data):
     if '_sa_instance_state' in data:
         del data["_sa_instance_state"]
-
-    if 'social_type' in data:
-        data["social_type"] = data["social_type"].value
     return data
 
 

@@ -1,10 +1,10 @@
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask_cors import CORS
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import UTC
 
 mail = Mail()
 db = SQLAlchemy()
 cors = CORS()
-scheduler = BackgroundScheduler()
-
+scheduler = BackgroundScheduler(timezone=UTC)

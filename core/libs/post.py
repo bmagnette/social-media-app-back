@@ -1,4 +1,5 @@
 from core.libs.Linkedin import LinkedInAPI
+from core.libs.Twitter import TwitterApi
 from core.models.account import Account
 
 
@@ -26,3 +27,8 @@ def send_message(user_id, account_info: dict, message: str):
         linkedin = LinkedInAPI()
         linkedin.account = acc
         return linkedin.write_post(account_info["token"], linkedin_payload)
+    if account_info["social_type"] == "TWITTER":
+        acc = Account.query.filter_by(id=account_info["id"]).first()
+        twitter = TwitterApi()
+        res = twitter.post(acc.twitter_oauth_token, acc.twitter_oauth_secret, message)
+        return res

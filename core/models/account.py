@@ -10,17 +10,15 @@ class MediaType(str, enum.Enum):
     FACEBOOK = "FACEBOOK"
     TWITTER = "TWITTER"
 
+    def __str__(self):
+        print("jere")
+        return self.value
 
-def initiate_account(user, user_info):
+
+def initiate_account(user, **kwargs):
+    print(kwargs)
     account = Account(
-        social_type=user_info["type"],
-        social_id=user_info["info"]["id"],
-        locale=user_info["info"]["lastName"]["preferredLocale"]["country"],
-        last_name=user_info["info"]["localizedLastName"],
-        first_name=user_info["info"]["localizedFirstName"],
-        profile_picture=user_info["info"]["profilePicture"]["displayImage"],
-        token=user_info["auth_code"],
-        expired_in=user_info["expired_in"]
+        **kwargs
     )
     db.session.add(account)
     user.accounts.append(account)
@@ -47,16 +45,22 @@ class Account(db.Model):
     social_type = db.Column(db.Enum(MediaType), nullable=False)
     social_id = db.Column(db.String, nullable=False)
 
-    locale = db.Column(db.String, nullable=False)
+    locale = db.Column(db.String, nullable=True)
 
-    last_name = db.Column(db.String, nullable=False)
-    first_name = db.Column(db.String, nullable=False)
+    last_name = db.Column(db.String, nullable=True)
+    first_name = db.Column(db.String, nullable=True)
+    account_name = db.Column(db.String, nullable=True)
+
     profile_picture = db.Column(db.Text())
 
     created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
 
-    token = db.Column(db.String, nullable=False)
-    expired_in = db.Column(db.Float)
+    facebook_token = db.Column(db.String, nullable=True)
+
+    twitter_oauth_token = db.Column(db.String, nullable=True)
+    twitter_oauth_secret = db.Column(db.String, nullable=True)
+
+    expired_in = db.Column(db.Integer)
 
     def __init__(self, **kwargs):
         super(Account, self).__init__(**kwargs)
