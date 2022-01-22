@@ -1,8 +1,10 @@
+import base64
 import hashlib
 import hmac
 import time
 import urllib.parse as urlparse
 import webbrowser
+from random import random
 
 import oauth2
 import requests
@@ -50,23 +52,15 @@ class TwitterApi:
 
         parameters = {
             "oauth_consumer_key": self.CONSUMER_KEY,
-            "oauth_nonce": "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
+            "oauth_nonce": hashlib.sha1(str(random).encode("utf-8")).hexdigest(),
             "oauth_signature_method": "HMAC-SHA1",
             "oauth_timestamp": str(int(time.time())),
             "oauth_token": oauth_token,
             "oauth_version": "1.0",
-            "status": message
-        }
-
-        parameters = {
-            "include_entities": True,
-            "oauth_consumer_key": "xvz1evFS4wEEPTGEFPHBog",
-            "oauth_nonce": "kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg",
-            "oauth_signature_method": "HMAC-SHA1",
-            "oauth_timestamp": "1318622958",
-            "oauth_token": "370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb",
-            "oauth_version": "1.0",
-            "status": 'Hello Ladies + Gentlemen, a signed OAuth request!'
+            "status": message,
+            "x_auth_login_challenge": "1",
+            "x_auth_login_verification": "1",
+            "x_auth_mode": "client_auth",
         }
 
         base_string = "%s&%s&%s" % (
@@ -77,26 +71,23 @@ class TwitterApi:
 
         # Create the signature using signing key composed of consumer secret and token secret obtained during 3-legged dance
         key = f'{urlparse.quote(self.CONSUMER_SECRET_KEY, "")}&{urlparse.quote(oauth_token_secret, "")}'
-        key = "kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw&LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE"
         signature = hmac.new(bytes(key, 'UTF-8'), bytes(base_string, 'UTF-8'), hashlib.sha1).digest()
-        print(signature)
-        import base64
+
         # Add result to parameters and create a string in required format for header
-        parameters['oauth_signature'] = "hCtSmYh+iHYCEqBWrE7C7hYmtUk="
+        parameters['oauth_signature'] = base64.b64encode(signature).decode()
         print(parameters["oauth_signature"])
         auth_header = 'OAuth %s' % ', '.join(sorted('%s="%s"' % (urlparse.quote(key, ""), urlparse.quote(value, ""))
                                                     for key, value in parameters.items() if key != 'status'))
 
         # Set HTTP headers
         http_headers = {"Authorization": auth_header, 'Content-Type': 'application/x-www-form-urlencoded'}
-
+        print(http_headers)
         # Send the request
         response = requests.post(url, message, headers=http_headers)
 
         # Set messages that will be used in modal dialogs
         if response.status_code == 200:
             print("Tweet sent mentioning")
-        else:
-            print("Error sending tweet: %s" % response.content)
+
         response.raise_for_status()
         return response.json()

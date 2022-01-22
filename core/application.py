@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 
@@ -10,10 +11,10 @@ from core.api.account import account_router
 from core.api.category import category_router
 from core.api.oauth2 import oauth2_router
 from core.api.post_batch import batch_router
+from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler
 from core.helpers.handlers import errors_handlers
 from core.libs.scheduler import post_cron, stripe_update
-from core.models.user import User, UserType
 
 
 def create_app() -> Flask:
@@ -21,17 +22,27 @@ def create_app() -> Flask:
 
     project_path = os.path.abspath(os.path.join(dir_path, os.pardir))
     load_dotenv(dotenv_path=project_path + '/.env')
-    import logging
     logging.basicConfig(level=logging.ERROR, format=f'%(asctime)s %(levelname)s : %(message)s')
     app = Flask("Social Media APP", template_folder=os.path.join(dir_path, 'templates'))
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DEBUG'] = True if os.environ["env"] == 'dev' else False
     app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+    app.config["MAIL_SERVER"] = os.environ["GMAIL_SERVER"]
+    app.config["MAIL_PORT"] = os.environ["GMAIL_PORT"]
+    app.config["MAIL_PASSWORD"] = os.environ["GMAIL_PASSWORD"]
+    app.config["MAIL_USERNAME"] = os.environ["GMAIL_EMAIL"]
+    app.config["MAIL_USE_TLS"] = False
+    app.config["MAIL_USE_SSL"] = True
+    app.config["MAIL_DEFAULT_SENDER"] = os.environ["GMAIL_EMAIL"]
+    app.config["MAIL_ASCII_ATTACHMENTS "] = True
+
     app.register_blueprint(oauth2_router, url_prefix='/linkedin')
+    app.register_blueprint(auth)
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
     app.register_blueprint(batch_router)
+
     errors_handlers(app)
     register_extensions(app)
     register_models(app)
@@ -59,8 +70,3 @@ def register_schedulers(app: Flask) -> None:
 def register_models(app: Flask) -> None:
     with app.app_context():
         db.create_all()
-
-        if not User.query.filter_by(email="baptiste.magnette@gmail.com").first():
-            user = User(email="baptiste.magnette@gmail.com", profile=UserType.CORPORATE.value)
-            db.session.add(user)
-            db.session.commit()

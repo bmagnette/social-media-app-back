@@ -3,6 +3,8 @@ import random
 import string
 from datetime import datetime
 
+from werkzeug.security import check_password_hash
+
 from core.extensions import db
 from core.models.account import accounts
 from core.models.account_category import categories
@@ -24,8 +26,9 @@ class User(db.Model):
     id = db.Column('user_id', db.Integer, primary_key=True)
 
     email = db.Column(db.String, nullable=False, unique=True)
-    password = db.Column(db.String)
+    password = db.Column(db.String, nullable=False)
 
+    is_confirmed = db.Column(db.Boolean, default=True)
     # User Info
     right = db.Column(db.Enum(UserRight), nullable=False, default=UserRight.ADMIN)
     profile = db.Column(db.String, nullable=False)
@@ -55,3 +58,6 @@ class User(db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)

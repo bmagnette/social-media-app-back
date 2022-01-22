@@ -2,7 +2,8 @@ import json
 from enum import Enum
 from functools import wraps
 
-from flask import make_response
+import jwt
+from flask import make_response, request, jsonify, current_app
 from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
 from werkzeug.exceptions import HTTPException
@@ -66,21 +67,21 @@ def to_json(data):
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # token = ''
-        # if 'Authorization' in request.headers:
-        #     token = request.headers['Authorization']
-        #
-        # if not token:
-        #     return jsonify({'message': 'Votre token de connexion est inexistant.'}), 401
+        token = ''
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization']
 
-        # try:
-        #     data = jwt.decode(token, current_app.config['SECRET_KEY'])
-        # except jwt.ExpiredSignatureError:
-        #     return response_wrapper('message', "Votre session a expiré, reconnectez-vous !", 401)
-        # except jwt.InvalidTokenError:
-        #     return response_wrapper('message', "Un problème est survenu, veuillez-vous reconnecter.", 401)
+        if not token:
+            return jsonify({'message': 'Votre token de connexion est inexistant.'}), 401
 
-        current_user = User.query.filter_by(id=1).first_or_404()
+        try:
+            data = jwt.decode(token.encode('UTF-8'), current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return response_wrapper('message', "Votre session a expiré, reconnectez-vous !", 401)
+        except jwt.InvalidTokenError:
+            return response_wrapper('message', "Un problème est survenu, veuillez-vous reconnecter.", 401)
+
+        current_user = User.query.filter_by(id=data["id"]).first_or_404()
         return f(current_user, *args, **kwargs)
 
     return decorated
