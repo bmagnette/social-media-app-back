@@ -19,9 +19,9 @@ def add_account(current_user: User):
         if existing_account:
             return {"message": "Un compte existe déjà"}, 400
         initiate_account(current_user, **data)
-        return {"message": "Le compte vient d'être associé."}, 201
+        return response_wrapper('message', "Le compte vient d'être associé.", 201)
     else:
-        return {"message": "Erreur : Aucun compte n'a été associé"}, 400
+        return {"message": "Error : Account is not created"}, 400
 
 
 @account_router.route("/account/<_id>", methods=["PUT"])

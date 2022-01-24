@@ -6,7 +6,7 @@ from flask import Blueprint, request, current_app, render_template
 from werkzeug.security import generate_password_hash
 
 from core.extensions import db
-from core.helpers.handlers import response_wrapper
+from core.helpers.handlers import response_wrapper, login_required
 from core.libs.Mailer import send_email
 from core.models.user import User, UserType
 
@@ -61,7 +61,7 @@ def login():
     if user.check_password(data["password"]):
         if user.is_confirmed == 0:
             current_app.logger.info('Login {} - Compte non confirmé'.format(data["username"]))
-            return response_wrapper('message', "Pour se connecter, nous vous invitons à valider votre compte !", 402)
+            return response_wrapper('message', "You need to validate your account to connect it!", 402)
 
         user.last_login = datetime.utcnow().timestamp()
         db.session.commit()
@@ -72,4 +72,23 @@ def login():
         current_app.logger.info('Login {} - Success'.format(data["username"]))
         return response_wrapper('user', {'token': token}, 200)
     current_app.logger.info('Login {} - Match incorrect'.format(data["username"]))
-    return response_wrapper('message', 'Votre mot de passe ou votre email est incorrect.', 400)
+    return response_wrapper('message', 'Your password or email is incorrect!', 400)
+
+
+@auth.route('/user/price', methods=['GET'])
+@login_required
+def get_price(current_user: User):
+    return response_wrapper('content', current_user.get_price(), 200)
+
+
+@auth.route('/user/accounts', methods=['GET'])
+@login_required
+def get_accounts(current_user: User):
+    return response_wrapper('content', current_user.get_accounts(), 200)
+
+
+@auth.route('/user/end_free_trial', methods=['GET'])
+@login_required
+def get_end_free_trial(current_user: User):
+    return response_wrapper('content', current_user.get_end_free_trial(), 200)
+

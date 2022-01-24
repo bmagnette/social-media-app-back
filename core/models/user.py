@@ -1,12 +1,12 @@
 import enum
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from werkzeug.security import check_password_hash
 
 from core.extensions import db
-from core.models.account import accounts
+from core.models.account import accounts, Account
 from core.models.account_category import categories
 
 
@@ -29,6 +29,7 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
 
     is_confirmed = db.Column(db.Boolean, default=True)
+
     # User Info
     right = db.Column(db.Enum(UserRight), nullable=False, default=UserRight.ADMIN)
     profile = db.Column(db.String, nullable=False)
@@ -50,8 +51,9 @@ class User(db.Model):
 
     # One to Many
     posted = db.relationship("PostBatch", back_populates="author")
+    invoices = db.relationship("StripeInvoice", back_populates="user")
 
-    sponsor_id = db.Column(db.String, nullable=False,
+    sponsor_id = db.Column(db.String,
                            default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
 
     stripe_id = db.Column(db.String, nullable=True)
@@ -61,3 +63,12 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+    def get_accounts(self):
+        return len(self.accounts.all())
+
+    def get_price(self):
+        return self.get_accounts() * 5
+
+    def get_end_free_trial(self):
+        return datetime.fromtimestamp(self.created_at) + timedelta(days=14)

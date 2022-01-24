@@ -10,7 +10,7 @@ from werkzeug.exceptions import HTTPException
 
 from core.models.account import MediaType, Account
 from core.models.user import User
-
+from datetime import datetime
 
 def errors_handlers(app):
     @app.errorhandler(404)
@@ -41,11 +41,13 @@ def errors_handlers(app):
 
 def parsing_to_json(o):
     if isinstance(o, Enum):
-        o = o.value
+        return o.value
     if isinstance(o, InstanceState):
         return None
     if isinstance(o, Account):
         return o.__dict__
+    if isinstance(o, datetime):
+        return datetime.timestamp(o)
     return o
 
 
@@ -72,14 +74,14 @@ def login_required(f):
             token = request.headers['Authorization']
 
         if not token:
-            return jsonify({'message': 'Votre token de connexion est inexistant.'}), 401
+            return jsonify({'message': "Your token access doesn't work, connect your account again."}), 401
 
         try:
             data = jwt.decode(token.encode('UTF-8'), current_app.config['SECRET_KEY'], algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
-            return response_wrapper('message', "Votre session a expiré, reconnectez-vous !", 401)
+            return response_wrapper('message', "Your session has expired, log in again!", 401)
         except jwt.InvalidTokenError:
-            return response_wrapper('message', "Un problème est survenu, veuillez-vous reconnecter.", 401)
+            return response_wrapper('message', "Something went wrong, please log in again.", 401)
 
         current_user = User.query.filter_by(id=data["id"]).first_or_404()
         return f(current_user, *args, **kwargs)
