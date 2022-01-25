@@ -16,7 +16,6 @@ class MediaType(str, enum.Enum):
 
 
 def initiate_account(user, **kwargs):
-    print(kwargs)
     account = Account(
         **kwargs
     )

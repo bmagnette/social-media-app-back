@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from enum import Enum
 from functools import wraps
 
@@ -8,9 +9,9 @@ from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
 from werkzeug.exceptions import HTTPException
 
-from core.models.account import MediaType, Account
+from core.models.account import Account
 from core.models.user import User
-from datetime import datetime
+
 
 def errors_handlers(app):
     @app.errorhandler(404)
@@ -66,7 +67,7 @@ def to_json(data):
     return data
 
 
-def login_required(f):
+def login_required(f, payment_required=False):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = ''
@@ -84,6 +85,10 @@ def login_required(f):
             return response_wrapper('message', "Something went wrong, please log in again.", 401)
 
         current_user = User.query.filter_by(id=data["id"]).first_or_404()
+
+        if payment_required and not current_user.customer_id and current_user.get_end_free_trial() > datetime.utcnow():
+            return response_wrapper('message', 'Payment Required, update your card info.', 402)
+
         return f(current_user, *args, **kwargs)
 
     return decorated

@@ -1,3 +1,5 @@
+from functools import partial
+
 from flask import Blueprint, request
 
 from core.extensions import db
@@ -10,7 +12,7 @@ category_router = Blueprint('category', __name__)
 
 
 @category_router.route("/category", methods=["POST"])
-@login_required
+@partial(login_required, payment_required=True)
 def add_category(current_user: User):
     data = request.get_json()
     if data:
@@ -24,7 +26,7 @@ def add_category(current_user: User):
 
 
 @category_router.route("/category/<_id>", methods=["PUT"])
-@login_required
+@partial(login_required)
 def edit_category(current_user: User, _id: int):
     data = request.get_json()
     category = AccountCategory.query.filter_by(id=_id).first_or_404()
@@ -41,7 +43,7 @@ def edit_category(current_user: User, _id: int):
 
 
 @category_router.route("/category/<_id>", methods=["DELETE"])
-@login_required
+@partial(login_required)
 def remove_category(current_user: User, _id: int):
     category = AccountCategory.query.filter_by(id=_id).first_or_404()
     db.session.delete(category)
@@ -50,14 +52,14 @@ def remove_category(current_user: User, _id: int):
 
 
 @category_router.route("/category/<_id>", methods=["GET"])
-@login_required
+@partial(login_required)
 def read_category(current_user: User, _id: int):
     category = AccountCategory.query.filter_by(id=_id).first_or_404()
     return response_wrapper('content', to_json(category.__dict__), 200)
 
 
 @category_router.route("/category/<_id>/accounts", methods=["GET"])
-@login_required
+@partial(login_required)
 def read_category_accounts(current_user: User, _id: int):
     category = AccountCategory.query.filter_by(id=_id).first_or_404()
     res = []
@@ -67,7 +69,7 @@ def read_category_accounts(current_user: User, _id: int):
 
 
 @category_router.route("/categories", methods=["GET"])
-@login_required
+@partial(login_required)
 def read_categories(current_user: User):
     res = []
     for category in current_user.categories:

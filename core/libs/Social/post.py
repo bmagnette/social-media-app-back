@@ -1,5 +1,5 @@
-from core.libs.Linkedin import LinkedInAPI
-from core.libs.Twitter import TwitterApi
+from core.libs.Social.Linkedin import LinkedInAPI
+from core.libs.Social.Twitter import TwitterApi
 from core.models.account import Account
 
 

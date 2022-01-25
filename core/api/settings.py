@@ -1,3 +1,5 @@
+from functools import partial
+
 from flask import Blueprint
 
 from core.helpers.handlers import login_required
@@ -7,7 +9,7 @@ setting_router = Blueprint('settings', __name__)
 
 
 @setting_router.route("/calculate-price", methods=["GET"])
-@login_required
+@partial(login_required)
 def calculate_price(current_user: User):
     """
     Calculate subscription price

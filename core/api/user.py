@@ -1,13 +1,16 @@
 import json
 from datetime import datetime, timedelta
+from functools import partial
 
 import jwt
+import stripe
 from flask import Blueprint, request, current_app, render_template
 from werkzeug.security import generate_password_hash
 
 from core.extensions import db
 from core.helpers.handlers import response_wrapper, login_required
 from core.libs.Mailer import send_email
+from core.models.Stripe.Customer import Customer
 from core.models.user import User, UserType
 
 auth = Blueprint('auth', __name__)
@@ -76,19 +79,41 @@ def login():
 
 
 @auth.route('/user/price', methods=['GET'])
-@login_required
+@partial(login_required)
 def get_price(current_user: User):
     return response_wrapper('content', current_user.get_price(), 200)
 
 
 @auth.route('/user/accounts', methods=['GET'])
-@login_required
+@partial(login_required)
 def get_accounts(current_user: User):
     return response_wrapper('content', current_user.get_accounts(), 200)
 
 
 @auth.route('/user/end_free_trial', methods=['GET'])
-@login_required
+@partial(login_required)
 def get_end_free_trial(current_user: User):
     return response_wrapper('content', current_user.get_end_free_trial(), 200)
 
+
+@auth.route('/user/settings', methods=['GET'])
+@partial(login_required)
+def get_user_data(current_user: User):
+    customer = Customer.query.filter_by(user_id=current_user.id).first()
+
+    card_info = None
+    if customer:
+        card_info = stripe.Customer.retrieve_source(
+            customer.stripe_id,
+            customer.card_id,
+        )
+
+    data = {
+        "current_price": current_user.get_price(),
+        "current_accounts": current_user.get_accounts(),
+        "end_free_trial": current_user.get_end_free_trial(),
+        "user": current_user.__dict__,
+        "card": card_info
+    }
+
+    return response_wrapper('content', data, 200)

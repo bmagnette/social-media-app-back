@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
 
+from core.api.Stripe.customer import customer_router
 from core.api.account import account_router
 from core.api.category import category_router
 from core.api.invoices import invoices_router
@@ -16,6 +17,7 @@ from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler
 from core.helpers.handlers import errors_handlers
 from core.libs.scheduler import post_cron, stripe_update
+import stripe
 
 
 def create_app() -> Flask:
@@ -33,15 +35,16 @@ def create_app() -> Flask:
     app.config["MAIL_PORT"] = os.environ["GMAIL_PORT"]
     app.config["MAIL_PASSWORD"] = os.environ["GMAIL_PASSWORD"]
     app.config["MAIL_USERNAME"] = os.environ["GMAIL_EMAIL"]
+    # app.config["STRIPE_SECRET"] = os.environ["STRIPE_SECRET"]
     app.config["MAIL_USE_TLS"] = False
     app.config["MAIL_USE_SSL"] = True
     app.config["MAIL_DEFAULT_SENDER"] = os.environ["GMAIL_EMAIL"]
     app.config["MAIL_ASCII_ATTACHMENTS "] = True
-
+    stripe.api_key = os.environ["STRIPE_SECRET"]
     app.register_blueprint(oauth2_router, url_prefix='/linkedin')
     app.register_blueprint(auth)
     app.register_blueprint(invoices_router)
-
+    app.register_blueprint(customer_router, url_prefix='/stripe')
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
     app.register_blueprint(batch_router)
@@ -66,7 +69,7 @@ def register_schedulers(app: Flask) -> None:
 
     scheduler.add_job(post_cron, 'interval', [app], seconds=60,
                       next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
-    scheduler.add_job(stripe_update, 'interval', [], hours=24,
+    scheduler.add_job(stripe_update, 'interval', [app],
                       next_run_time=datetime.utcnow().replace(hour=0, minute=30))
 
 

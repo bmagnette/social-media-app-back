@@ -3,6 +3,7 @@ import random
 import string
 from datetime import datetime, timedelta
 
+from sqlalchemy import ForeignKey
 from werkzeug.security import check_password_hash
 
 from core.extensions import db
@@ -51,12 +52,13 @@ class User(db.Model):
 
     # One to Many
     posted = db.relationship("PostBatch", back_populates="author")
-    invoices = db.relationship("StripeInvoice", back_populates="user")
+    invoices = db.relationship("Invoice", back_populates="user")
 
     sponsor_id = db.Column(db.String,
                            default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
 
-    stripe_id = db.Column(db.String, nullable=True)
+    # One to One
+    customer_id = db.Column(db.Integer, ForeignKey('stripe_customer.customer_id'), nullable=True)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

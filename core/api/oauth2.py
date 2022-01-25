@@ -1,15 +1,13 @@
-import json
 import os
+from functools import partial
 from urllib.parse import urlencode
 
-import oauth2
-import requests
-from flask import Blueprint, request, redirect, url_for
+from flask import Blueprint, request, redirect
 
-from core.helpers.handlers import login_required, response_wrapper
-from core.libs.Facebook import FacebookLogin
-from core.libs.Linkedin import LinkedInAPI
-from core.libs.Twitter import TwitterApi
+from core.helpers.handlers import login_required
+from core.libs.Social.Facebook import FacebookLogin
+from core.libs.Social.Linkedin import LinkedInAPI
+from core.libs.Social.Twitter import TwitterApi
 from core.models.account import MediaType
 from core.models.user import User
 
@@ -33,7 +31,7 @@ def redirect_oauth():
 
 
 @oauth2_router.route("/authorize", methods=["POST"])
-@login_required
+@partial(login_required, payment_required=True)
 def authorize(current_user: User):
     LinkedInAPI().authorize()
     return {}, 200
@@ -65,7 +63,7 @@ def redirect_oauth_facebook():
 
 
 @oauth2_router.route("/facebook-authorize", methods=["POST"])
-@login_required
+@partial(login_required, payment_required=True)
 def authorize_facebook(current_user: User):
     FacebookLogin().authorize()
     return {}, 200
@@ -90,7 +88,7 @@ def authorize_facebook(current_user: User):
 
 
 @oauth2_router.route("/twitter-authorize", methods=["POST"])
-@login_required
+@partial(login_required, payment_required=True)
 def authorize_twitter(current_user: User):
     TwitterApi().authorize(current_user.id)
     return {}, 200

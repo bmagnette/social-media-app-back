@@ -1,7 +1,9 @@
+from functools import partial
+
 from flask import Blueprint, request
 
 from core.helpers.handlers import login_required, to_json, response_wrapper
-from core.libs.post import send_message
+from core.libs.Social.post import send_message
 from core.models.account_category import AccountCategory
 from core.models.post import Post
 from core.models.post_batch import PostBatch
@@ -12,7 +14,7 @@ batch_router = Blueprint('batch', __name__)
 
 
 @batch_router.route("/batch", methods=["POST"])
-@login_required
+@partial(login_required, payment_required=True)
 def add_batch(current_user: User):
     """
     Si le batch s'envoie tout de suite alors envoyer tout de suite
@@ -49,7 +51,7 @@ def add_batch(current_user: User):
 
 
 @batch_router.route("/batch/<_id>", methods=["PUT"])
-@login_required
+@partial(login_required)
 def edit_batch(current_user: User, _id: int):
     """
     TO IMPLEMENT
@@ -57,7 +59,7 @@ def edit_batch(current_user: User, _id: int):
 
 
 @batch_router.route("/batch/<_id>", methods=["DELETE"])
-@login_required
+@partial(login_required)
 def remove_batch(current_user: User, _id: int):
     batch = PostBatch.query.filter_by(id=_id).first_or_404()
     db.session.delete(batch)
@@ -66,14 +68,14 @@ def remove_batch(current_user: User, _id: int):
 
 
 @batch_router.route("/batch/<_id>", methods=["GET"])
-@login_required
+@partial(login_required)
 def read_batch(current_user: User, _id: int):
     batch = PostBatch.query.filter_by(id=_id).first_or_404()
     return to_json(batch.__dict__), 200
 
 
 @batch_router.route("/batchs", methods=["GET"])
-@login_required
+@partial(login_required)
 def get_batchs(current_user: User):
     res = []
     batchs = PostBatch.query.filter_by(author_id=current_user.id).all()
