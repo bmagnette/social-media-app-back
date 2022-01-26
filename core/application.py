@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 
+import stripe
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from flask import Flask
@@ -17,7 +18,6 @@ from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler
 from core.helpers.handlers import errors_handlers
 from core.libs.scheduler import post_cron, stripe_update
-import stripe
 
 
 def create_app() -> Flask:
@@ -53,11 +53,12 @@ def create_app() -> Flask:
     app.register_blueprint(batch_router)
     app.register_blueprint(stripe_router, url_prefix='/stripe')
 
-
     errors_handlers(app)
     register_extensions(app)
     register_models(app)
     register_schedulers(app)
+
+    app.logger.warn('Loading App ended')
     return app
 
 
@@ -74,7 +75,7 @@ def register_schedulers(app: Flask) -> None:
 
     scheduler.add_job(post_cron, 'interval', [app], seconds=60,
                       next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
-    scheduler.add_job(stripe_update, 'interval', [app],
+    scheduler.add_job(stripe_update, 'interval', [app], hours=24,
                       next_run_time=datetime.utcnow().replace(hour=0, minute=30))
 
 
