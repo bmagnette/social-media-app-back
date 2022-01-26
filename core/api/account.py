@@ -56,6 +56,8 @@ def read_account(current_user: User, _id: int):
 @account_router.route("/accounts/orphan", methods=["GET"])
 @partial(login_required)
 def read_account_without_category(current_user: User):
+    current_app.logger.info("test")
+
     res = []
     accounts = [account for account in current_user.accounts if account.category is None]
     for account in accounts:
