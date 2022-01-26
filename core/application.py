@@ -27,6 +27,11 @@ def create_app() -> Flask:
     load_dotenv(dotenv_path=project_path + '/.env')
     logging.basicConfig(level=logging.ERROR, format=f'%(asctime)s %(levelname)s : %(message)s')
     app = Flask("Social Media APP", template_folder=os.path.join(dir_path, 'templates'))
+    gunicorn_error_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers.extend(gunicorn_error_logger.handlers)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('this will show in the log')
+
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DEBUG'] = True if os.environ["env"] == 'dev' else False
