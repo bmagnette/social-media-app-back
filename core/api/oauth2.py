@@ -37,7 +37,6 @@ def redirect_oauth():
     res = requests.post(os.environ["BACK_END_APP_URI"] + "/account",
                         data=json.dumps(payload),
                         headers={'Content-Type': 'application/json', 'Authorization': request.args["state"]})
-
     res.raise_for_status()
     return redirect(os.environ["FRONT_END_APP_URI"] + "/accounts")
 

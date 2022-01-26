@@ -45,7 +45,8 @@ class LinkedInAPI:
             'scope': 'r_liteprofile,r_emailaddress,w_member_social'
         }
         response = requests.get(f'{self.URI_AUTH}/authorization', params=params)
-        print(response)
+        current_app.logger.info(response.status_code)
+        current_app.logger.info(response.url)
         webbrowser.open(response.url)
 
     def refresh_token(self, auth_code):

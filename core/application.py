@@ -52,10 +52,11 @@ def create_app() -> Flask:
     app.register_blueprint(oauth2_router, url_prefix='/linkedin')
     app.register_blueprint(auth)
     app.register_blueprint(account_router)
-    app.register_blueprint(invoice_router)
     app.register_blueprint(category_router)
     app.register_blueprint(batch_router)
+
     app.register_blueprint(stripe_router, url_prefix='/stripe')
+    app.register_blueprint(invoice_router, url_prefix='/stripe')
 
     errors_handlers(app)
     register_extensions(app)
