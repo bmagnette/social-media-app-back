@@ -1,8 +1,12 @@
 import webbrowser
+from datetime import datetime, timedelta
 
+import jwt
 import requests
+from flask import current_app
 
 from core.helpers.auth import create_CSRF_token, headers_bearer
+from core.models.user import User
 
 
 class LinkedInAPI:
@@ -21,7 +25,7 @@ class LinkedInAPI:
         r.raise_for_status()
         return r.json()
 
-    def authorize(self):
+    def authorize(self, user: User):
         """
         Make a HTTP request to the authorization URL.
         It will open the authentication URL.
@@ -29,7 +33,8 @@ class LinkedInAPI:
         The page will look like an error. but it is not.
         You'll need to copy the redirected URL.
         """
-        token = create_CSRF_token()
+        token = jwt.encode({'id': user.id, 'exp': datetime.utcnow() + timedelta(minutes=30)},
+                           current_app.config['SECRET_KEY'])
         params = {
             'response_type': 'code',
             'client_id': self.CLIENT_ID,

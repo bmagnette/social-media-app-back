@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from core.models.Stripe.Customer import Customer
-from core.models.account import MediaType
-from core.models.post_batch import PostBatch
+from core.models.Social.account import MediaType
+from core.models.Social.post_batch import PostBatch
 import stripe
 
 # Vérifier que le check pour obtenir les posts est correct.

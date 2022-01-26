@@ -1,6 +1,6 @@
 from core.libs.Social.Linkedin import LinkedInAPI
 from core.libs.Social.Twitter import TwitterApi
-from core.models.account import Account
+from core.models.Social.account import Account
 
 
 def send_message(user_id, account_info: dict, message: str):

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from core.extensions import db
-from core.models.account import Account
+from core.models.Social.account import Account
 
 categories = db.Table('category_join',
                       db.Column('category_id', db.Integer, db.ForeignKey('account_category.category_id'), primary_key=True),

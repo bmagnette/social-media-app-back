@@ -4,8 +4,8 @@ from flask import Blueprint, request
 
 from core.extensions import db
 from core.helpers.handlers import login_required, to_json, response_wrapper
-from core.models.account import Account
-from core.models.account_category import AccountCategory, initiate_account_category
+from core.models.Social.account import Account
+from core.models.Social.account_category import AccountCategory, initiate_account_category
 from core.models.user import User
 
 category_router = Blueprint('category', __name__)

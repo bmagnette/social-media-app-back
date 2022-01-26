@@ -4,8 +4,8 @@ from flask import Blueprint, request
 
 from core.extensions import db
 from core.helpers.handlers import to_json, response_wrapper, login_required
-from core.models.account import initiate_account, Account
-from core.models.account_category import AccountCategory
+from core.models.Social.account import initiate_account, Account
+from core.models.Social.account_category import AccountCategory
 from core.models.user import User
 
 account_router = Blueprint('account', __name__)
@@ -19,7 +19,7 @@ def add_account(current_user: User):
     if data:
         existing_account = Account.query.filter_by(social_id=data["social_id"]).first()
         if existing_account:
-            return {"message": "Un compte existe déjà"}, 400
+            return {"message": "An account already exist with this credentials !"}, 202
         initiate_account(current_user, **data)
         return response_wrapper('message', "Le compte vient d'être associé.", 201)
     else:

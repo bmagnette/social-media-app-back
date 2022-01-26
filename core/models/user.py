@@ -7,8 +7,8 @@ from sqlalchemy import ForeignKey
 from werkzeug.security import check_password_hash
 
 from core.extensions import db
-from core.models.account import accounts, Account
-from core.models.account_category import categories
+from core.models.Social.account import accounts
+from core.models.Social.account_category import categories
 
 
 class UserRight(enum.Enum):

@@ -9,7 +9,7 @@ from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
 from werkzeug.exceptions import HTTPException
 
-from core.models.account import Account
+from core.models.Social.account import Account
 from core.models.user import User
 
 

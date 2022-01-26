@@ -1,7 +1,7 @@
 from functools import partial
 
 import stripe
-from flask import Blueprint, request
+from flask import request, Blueprint
 from stripe.error import CardError
 
 from core.extensions import db
@@ -9,10 +9,9 @@ from core.helpers.handlers import response_wrapper, login_required
 from core.models.Stripe.Customer import Customer
 from core.models.user import User
 
-customer_router = Blueprint('customer', __name__)
+stripe_router = Blueprint('customer', __name__)
 
-
-@customer_router.route("/customer", methods=["POST"])
+@stripe_router.route("/customer", methods=["POST"])
 @partial(login_required)
 def create_stripe_account(current_user: User):
     data = request.get_json()

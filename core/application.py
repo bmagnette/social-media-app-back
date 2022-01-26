@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_migrate import Migrate
 
-from core.api.Stripe.customer import customer_router
+from core.api.Stripe.customer import stripe_router
+from core.api.Stripe.invoices import invoice_router
 from core.api.account import account_router
 from core.api.category import category_router
-from core.api.invoices import invoices_router
 from core.api.oauth2 import oauth2_router
 from core.api.post_batch import batch_router
 from core.api.user import auth
@@ -43,11 +43,12 @@ def create_app() -> Flask:
     stripe.api_key = os.environ["STRIPE_SECRET"]
     app.register_blueprint(oauth2_router, url_prefix='/linkedin')
     app.register_blueprint(auth)
-    app.register_blueprint(invoices_router)
-    app.register_blueprint(customer_router, url_prefix='/stripe')
     app.register_blueprint(account_router)
+    app.register_blueprint(invoice_router)
     app.register_blueprint(category_router)
     app.register_blueprint(batch_router)
+    app.register_blueprint(stripe_router, url_prefix='/stripe')
+
 
     errors_handlers(app)
     register_extensions(app)

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from core.extensions import db
-from core.models.account import MediaType
+from core.models.Social.account import MediaType
 
 
 class Post(db.Model):

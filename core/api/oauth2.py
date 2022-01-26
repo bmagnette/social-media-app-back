@@ -1,14 +1,15 @@
+import json
 import os
 from functools import partial
-from urllib.parse import urlencode
 
+import requests
 from flask import Blueprint, request, redirect
 
 from core.helpers.handlers import login_required
 from core.libs.Social.Facebook import FacebookLogin
 from core.libs.Social.Linkedin import LinkedInAPI
 from core.libs.Social.Twitter import TwitterApi
-from core.models.account import MediaType
+from core.models.Social.account import MediaType
 from core.models.user import User
 
 oauth2_router = Blueprint('oauth2', __name__)
@@ -19,21 +20,30 @@ def redirect_oauth():
     auth_code = request.args["code"]
     linkedin = LinkedInAPI()
     refreshed_token = linkedin.refresh_token(auth_code)
-    data = linkedin.user_info(refreshed_token)
+    linkedin_info = linkedin.user_info(refreshed_token)
 
-    res = {"expired_in": 60, "social_id": data["id"],
-           "facebook_token": str(refreshed_token),
-           "last_name": data["localizedLastName"],
-           "first_name": data["localizedFirstName"], "profile_picture": "",
-           "social_type": MediaType.LINKEDIN.value}
+    payload = {
+        "social_type": MediaType.LINKEDIN.value,
+        "social_id": linkedin_info["id"],
+        "last_name": linkedin_info["localizedLastName"],
+        "first_name": linkedin_info["localizedFirstName"],
+        "profile_picture": linkedin_info["profilePicture"]["displayImage"],
+        "expired_in": 60,
+        "facebook_token": str(refreshed_token)
+    }
 
-    return redirect(os.environ["FRONT_END_APP_URI"] + "/create-account?" + urlencode(res))
+    res = requests.post(os.environ["BACK_END_APP_URI"] + "/account",
+                        data=json.dumps(payload),
+                        headers={'Content-Type': 'application/json', 'Authorization': request.args["state"]})
+
+    res.raise_for_status()
+    return redirect(os.environ["FRONT_END_APP_URI"] + "/accounts")
 
 
 @oauth2_router.route("/authorize", methods=["POST"])
 @partial(login_required, payment_required=True)
 def authorize(current_user: User):
-    LinkedInAPI().authorize()
+    LinkedInAPI().authorize(current_user)
     return {}, 200
 
 

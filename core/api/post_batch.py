@@ -4,9 +4,9 @@ from flask import Blueprint, request
 
 from core.helpers.handlers import login_required, to_json, response_wrapper
 from core.libs.Social.post import send_message
-from core.models.account_category import AccountCategory
-from core.models.post import Post
-from core.models.post_batch import PostBatch
+from core.models.Social.account_category import AccountCategory
+from core.models.Social.post import Post
+from core.models.Social.post_batch import PostBatch
 from core.extensions import db
 from core.models.user import User
 
