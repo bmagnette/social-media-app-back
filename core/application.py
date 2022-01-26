@@ -73,13 +73,13 @@ def register_extensions(app: Flask) -> None:
 
 
 def register_schedulers(app: Flask) -> None:
-    with app.app_context():
-        scheduler.start()
-
     scheduler.add_job(post_cron, 'interval', [app], seconds=60,
                       next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
     scheduler.add_job(stripe_update, 'interval', [app], hours=24,
                       next_run_time=datetime.utcnow().replace(hour=0, minute=30))
+
+    with app.app_context():
+        scheduler.start()
 
 
 def register_models(app: Flask) -> None:
