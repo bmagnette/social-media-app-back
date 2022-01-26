@@ -30,7 +30,6 @@ def create_app() -> Flask:
     gunicorn_error_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers.extend(gunicorn_error_logger.handlers)
     app.logger.setLevel(logging.INFO)
-    app.logger.info('this will show in the log')
 
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
