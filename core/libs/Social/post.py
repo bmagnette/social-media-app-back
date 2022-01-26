@@ -1,9 +1,14 @@
+from flask import current_app
+
 from core.libs.Social.Linkedin import LinkedInAPI
 from core.libs.Social.Twitter import TwitterApi
 from core.models.Social.account import Account
 
 
 def send_message(user_id, account_info: dict, message: str):
+    CLIENT_ID = current_app.config["LINKEDIN_CLIENT_ID"]
+    CLIENT_SECRET = current_app.config["LINKEDIN_CLIENT_SECRET"]
+    REDIRECT_URI = current_app.config["LINKEDIN_REDIRECT_URI"]
     if account_info["social_type"] == 'LINKEDIN':
         linkedin_payload = {
             "author": '',
@@ -24,7 +29,7 @@ def send_message(user_id, account_info: dict, message: str):
         linkedin_payload["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"][
             "text"] = message
         acc = Account.query.filter_by(id=account_info["id"]).first()
-        linkedin = LinkedInAPI()
+        linkedin = LinkedInAPI(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
         linkedin.account = acc
         return linkedin.write_post(account_info["token"], linkedin_payload)
     if account_info["social_type"] == "TWITTER":

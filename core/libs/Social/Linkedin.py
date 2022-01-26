@@ -5,17 +5,19 @@ import jwt
 import requests
 from flask import current_app
 
-from core.helpers.auth import create_CSRF_token, headers_bearer
+from core.helpers.auth import headers_bearer
 from core.models.user import User
 
 
 class LinkedInAPI:
-    CLIENT_ID = '77kwpo7k3bxgl1'
-    CLIENT_SECRET = 'ASwtC0s53qiPTj2W'
-    REDIRECT_URI = 'http://localhost:5000/linkedin/redirect-linkedin'
     URI_AUTH = 'https://www.linkedin.com/oauth/v2'
     URI_API = 'https://api.linkedin.com/v2'
     account = None
+
+    def __init__(self, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI):
+        self.CLIENT_ID = CLIENT_ID
+        self.CLIENT_SECRET = CLIENT_SECRET
+        self.REDIRECT_URI = REDIRECT_URI
 
     def user_info(self, token):
         """

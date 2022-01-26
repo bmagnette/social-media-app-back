@@ -3,7 +3,7 @@ import os
 from functools import partial
 
 import requests
-from flask import Blueprint, request, redirect
+from flask import Blueprint, request, redirect, current_app
 
 from core.helpers.handlers import login_required
 from core.libs.Social.Facebook import FacebookLogin
@@ -18,7 +18,9 @@ oauth2_router = Blueprint('oauth2', __name__)
 @oauth2_router.route("/redirect-linkedin", methods=["GET"])
 def redirect_oauth():
     auth_code = request.args["code"]
-    linkedin = LinkedInAPI()
+
+    linkedin = LinkedInAPI(current_app.config["LINKEDIN_CLIENT_ID"], current_app.config["LINKEDIN_CLIENT_SECRET"],
+                           current_app.config["LINKEDIN_REDIRECT_URI"])
     refreshed_token = linkedin.refresh_token(auth_code)
     linkedin_info = linkedin.user_info(refreshed_token)
 
@@ -43,7 +45,8 @@ def redirect_oauth():
 @oauth2_router.route("/authorize", methods=["POST"])
 @partial(login_required, payment_required=True)
 def authorize(current_user: User):
-    LinkedInAPI().authorize(current_user)
+    LinkedInAPI(current_app.config["LINKEDIN_CLIENT_ID"], current_app.config["LINKEDIN_CLIENT_SECRET"],
+                current_app.config["LINKEDIN_REDIRECT_URI"]).authorize(current_user)
     return {}, 200
 
 
@@ -79,22 +82,23 @@ def authorize_facebook(current_user: User):
     return {}, 200
 
 
-# @oauth2_router.route("/redirect-twitter", methods=["GET"])
-# def redirect_oauth_twitter():
-#     data = TwitterApi().callback(current_user.id, request.args.get('oauth_verifier'))
-#
-#     res = requests.post("http://localhost:5000/account",
-#                         data=json.dumps(
-#                             {"twitter_oauth_token": data["oauth_token"],
-#                              "twitter_oauth_secret": data["oauth_token_secret"],
-#                              "expired_in": None, "profile_picture": "",
-#                              "social_id": data["user_id"],
-#                              "account_name": data["screen_name"],
-#                              "social_type": MediaType.TWITTER.value}),
-#                         headers={'Content-Type': 'application/json'})
-#
-#     res.raise_for_status()
-#     return redirect("http://localhost:3000")
+@oauth2_router.route("/redirect-twitter", methods=["GET"])
+def redirect_oauth_twitter():
+    print(request.args)
+    data = TwitterApi().callback(current_user.id, request.args.get('oauth_verifier'))
+
+    res = requests.post("http://localhost:5000/account",
+                        data=json.dumps(
+                            {"twitter_oauth_token": data["oauth_token"],
+                             "twitter_oauth_secret": data["oauth_token_secret"],
+                             "expired_in": None, "profile_picture": "",
+                             "social_id": data["user_id"],
+                             "account_name": data["screen_name"],
+                             "social_type": MediaType.TWITTER.value}),
+                        headers={'Content-Type': 'application/json'})
+
+    res.raise_for_status()
+    return redirect("http://localhost:3000")
 
 
 @oauth2_router.route("/twitter-authorize", methods=["POST"])

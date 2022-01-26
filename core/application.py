@@ -35,7 +35,11 @@ def create_app() -> Flask:
     app.config["MAIL_PORT"] = os.environ["GMAIL_PORT"]
     app.config["MAIL_PASSWORD"] = os.environ["GMAIL_PASSWORD"]
     app.config["MAIL_USERNAME"] = os.environ["GMAIL_EMAIL"]
-    # app.config["STRIPE_SECRET"] = os.environ["STRIPE_SECRET"]
+    app.config["STRIPE_SECRET"] = os.environ["STRIPE_SECRET"]
+    app.config["LINKEDIN_CLIENT_ID"] = os.environ["LINKEDIN_CLIENT_ID"]
+    app.config["LINKEDIN_CLIENT_SECRET"] = os.environ["LINKEDIN_CLIENT_SECRET"]
+    app.config["LINKEDIN_REDIRECT_URI"] = os.environ["LINKEDIN_REDIRECT_URI"]
+
     app.config["MAIL_USE_TLS"] = False
     app.config["MAIL_USE_SSL"] = True
     app.config["MAIL_DEFAULT_SENDER"] = os.environ["GMAIL_EMAIL"]
