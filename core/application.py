@@ -58,7 +58,6 @@ def create_app() -> Flask:
     register_models(app)
     register_schedulers(app)
 
-    app.logger.warn('Loading App ended')
     return app
 
 

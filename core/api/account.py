@@ -1,6 +1,6 @@
 from functools import partial
 
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 
 from core.extensions import db
 from core.helpers.handlers import to_json, response_wrapper, login_required
@@ -56,6 +56,8 @@ def read_account(current_user: User, _id: int):
 @account_router.route("/accounts/orphan", methods=["GET"])
 @partial(login_required)
 def read_account_without_category(current_user: User):
+    current_app.logger.warn('Loading App ended')
+
     res = []
     accounts = [account for account in current_user.accounts if account.category is None]
     for account in accounts:
