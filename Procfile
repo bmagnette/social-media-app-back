@@ -1,1 +1,1 @@
-web: gunicorn --preload --log-level info run_app:app
+web: gunicorn --preload --log-level critical run_app:app
