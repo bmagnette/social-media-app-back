@@ -1,9 +1,10 @@
 import json
 import os
+import webbrowser
 from functools import partial
 
 import requests
-from flask import Blueprint, redirect
+from flask import Blueprint, redirect, make_response
 
 from core.helpers.handlers import login_required
 from core.libs.Oauth2.oauth import OAuthSignIn
@@ -16,14 +17,15 @@ oauth = Blueprint('oauth', __name__)
 @partial(login_required, payment_required=True)
 def oauth_authorize(current_user: User, provider):
     url = OAuthSignIn(provider).get_provider(provider).authorize(current_user)
-    response = redirect(url)
+    response = make_response(redirect(url, code=302))
     response.headers = {
         'Authorization': 'whatever',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
     }
-    return response
+    webbrowser.open_new(url)
+    return {}, 200
 
 
 @oauth.route('/callback/<provider>', methods=["GET"])

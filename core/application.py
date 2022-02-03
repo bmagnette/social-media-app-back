@@ -26,6 +26,7 @@ def create_app() -> Flask:
     project_path = os.path.abspath(os.path.join(dir_path, os.pardir))
     load_dotenv(dotenv_path=project_path + '/.env')
     logging.basicConfig(level=logging.ERROR, format=f'%(asctime)s %(levelname)s : %(message)s')
+
     app = Flask("Social Media APP", template_folder=os.path.join(dir_path, 'templates'))
     gunicorn_error_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers.extend(gunicorn_error_logger.handlers)
