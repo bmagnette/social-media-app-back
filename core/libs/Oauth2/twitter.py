@@ -1,4 +1,5 @@
 import base64
+import os
 import webbrowser
 
 import requests
@@ -13,7 +14,7 @@ class TwitterSignIn(OAuthSignIn):
         super(TwitterSignIn, self).__init__('twitter')
         self.authorize_url = 'https://twitter.com/i/oauth2/authorize'
         self.access_token_url = 'https://api.twitter.com/2/oauth2/token'
-        self.redirect_uri = 'http://localhost:5000/oauth/callback/twitter'
+        self.redirect_uri = os.environ["BACK_END_APP_URI"] + '/oauth/callback/twitter'
         self.base_uri = 'https://api.twitter.com'
 
     def authorize(self, current_user):

@@ -1,3 +1,4 @@
+import os
 import webbrowser
 
 import requests
@@ -12,7 +13,7 @@ class FacebookSignIn(OAuthSignIn):
         super(FacebookSignIn, self).__init__('facebook')
         self.authorize_url = 'https://www.facebook.com/v12.0/dialog/oauth'
         self.access_token_url = 'https://graph.facebook.com/v12.0/oauth/access_token'
-        self.redirect_uri = 'http://localhost:5000/oauth/callback/facebook'
+        self.redirect_uri = os.environ["BACK_END_APP_URI"] + '/oauth/callback/facebook'
         self.base_uri = 'https://graph.facebook.com'
 
     def authorize(self, current_user):
