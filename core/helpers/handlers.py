@@ -86,7 +86,7 @@ def login_required(f, payment_required=False):
 
         current_user = User.query.filter_by(id=data["id"]).first_or_404()
 
-        if payment_required and not current_user.customer_id and current_user.get_end_free_trial() > datetime.utcnow():
+        if payment_required and not current_user.customer_id and current_user.get_end_free_trial() < datetime.utcnow():
             return response_wrapper('message', 'Payment Required, update your card info.', 402)
 
         return f(current_user, *args, **kwargs)
