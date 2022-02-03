@@ -4,7 +4,7 @@ import webbrowser
 from functools import partial
 
 import requests
-from flask import Blueprint, redirect, make_response
+from flask import Blueprint, redirect, make_response, current_app
 
 from core.helpers.handlers import login_required
 from core.libs.Oauth2.oauth import OAuthSignIn
@@ -24,6 +24,7 @@ def oauth_authorize(current_user: User, provider):
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
     }
+    current_app.logger.info(url)
     webbrowser.open_new(url)
     return {}, 200
 
