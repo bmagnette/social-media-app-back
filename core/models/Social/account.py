@@ -1,6 +1,8 @@
 import enum
 from datetime import datetime
 
+from flask import current_app
+
 from core.extensions import db
 
 
@@ -16,7 +18,7 @@ class MediaType(str, enum.Enum):
 
 
 def initiate_account(user, **kwargs):
-    print(kwargs)
+    current_app.logger.info(f'{user.id} - Adding new account')
     account = Account(
         **kwargs
     )
@@ -47,18 +49,14 @@ class Account(db.Model):
 
     locale = db.Column(db.String, nullable=True)
 
-    last_name = db.Column(db.String, nullable=True)
-    first_name = db.Column(db.String, nullable=True)
-    account_name = db.Column(db.String, nullable=True)
+    name = db.Column(db.String, nullable=True)
 
     profile_picture = db.Column(db.Text())
 
     created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
 
-    facebook_token = db.Column(db.String, nullable=True)
-
-    twitter_oauth_token = db.Column(db.String, nullable=True)
-    twitter_oauth_secret = db.Column(db.String, nullable=True)
+    access_token = db.Column(db.String, nullable=False)
+    refresh_token = db.Column(db.String, nullable=True)
 
     expired_in = db.Column(db.Integer)
 

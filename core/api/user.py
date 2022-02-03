@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash
 
 from core.extensions import db
 from core.helpers.handlers import response_wrapper, login_required
-from core.libs.Mailer import send_email
+from core.libs.mailer import send_email
 from core.models.Stripe.Customer import Customer
 from core.models.user import User, UserType
 

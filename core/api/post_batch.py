@@ -3,7 +3,7 @@ from functools import partial
 from flask import Blueprint, request
 
 from core.helpers.handlers import login_required, to_json, response_wrapper
-from core.libs.Social.post import send_message
+# from core.libs.Social.post import send_message
 from core.models.Social.account_category import AccountCategory
 from core.models.Social.post import Post
 from core.models.Social.post_batch import PostBatch
@@ -24,10 +24,9 @@ def add_batch(current_user: User):
     batch = PostBatch(author_id=current_user.id)
     db.session.add(batch)
     db.session.commit()
-
     for account in data["accounts"]:
-        res = send_message(current_user.id, account, data["message"])
-        print(res)
+        # res = send_message(current_user.id, account, data["message"])
+        # print(res)
         post = Post(
             batch_id=batch.id,
             account_id=account["id"],

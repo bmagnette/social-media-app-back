@@ -12,7 +12,7 @@ from core.api.Stripe.customer import stripe_router
 from core.api.Stripe.invoices import invoice_router
 from core.api.account import account_router
 from core.api.category import category_router
-from core.api.oauth2 import oauth2_router
+from core.api.oauth2 import oauth
 from core.api.post_batch import batch_router
 from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler
@@ -40,16 +40,31 @@ def create_app() -> Flask:
     app.config["MAIL_PASSWORD"] = os.environ["GMAIL_PASSWORD"]
     app.config["MAIL_USERNAME"] = os.environ["GMAIL_EMAIL"]
     app.config["STRIPE_SECRET"] = os.environ["STRIPE_SECRET"]
-    app.config["LINKEDIN_CLIENT_ID"] = os.environ["LINKEDIN_CLIENT_ID"]
-    app.config["LINKEDIN_CLIENT_SECRET"] = os.environ["LINKEDIN_CLIENT_SECRET"]
-    app.config["LINKEDIN_REDIRECT_URI"] = os.environ["LINKEDIN_REDIRECT_URI"]
 
+    app.config['OAUTH_CREDENTIALS'] = {
+        'facebook': {
+            'id': os.environ["FACEBOOK_CLIENT_ID"],
+            'secret': os.environ["FACEBOOK_CLIENT_SECRET"]
+        },
+        'twitter': {
+            'id': os.environ["TWITTER_CLIENT_ID"],
+            'secret': os.environ["TWITTER_CLIENT_SECRET"]
+        },
+        'linkedin': {
+            'id': os.environ["LINKEDIN_CLIENT_ID"],
+            'secret': os.environ["LINKEDIN_CLIENT_SECRET"],
+        },
+        'instagram': {
+            'id': '',
+            'secret': ''
+        }
+    }
     app.config["MAIL_USE_TLS"] = False
     app.config["MAIL_USE_SSL"] = True
     app.config["MAIL_DEFAULT_SENDER"] = os.environ["GMAIL_EMAIL"]
     app.config["MAIL_ASCII_ATTACHMENTS "] = True
     stripe.api_key = os.environ["STRIPE_SECRET"]
-    app.register_blueprint(oauth2_router, url_prefix='/linkedin')
+    app.register_blueprint(oauth, url_prefix='/oauth')
     app.register_blueprint(auth)
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
@@ -81,6 +96,7 @@ def register_schedulers(app: Flask) -> None:
                       next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
     scheduler.add_job(stripe_update, 'interval', [app], hours=24,
                       next_run_time=datetime.utcnow().replace(hour=0, minute=30))
+
 
 def register_models(app: Flask) -> None:
     with app.app_context():

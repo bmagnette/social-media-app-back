@@ -12,6 +12,9 @@ from core.models.user import User
 
 
 def post_cron(app):
+    """
+    Each minute check if we should send Post.
+    """
     with app.app_context():
         today = datetime.utcnow().now()
         batches = PostBatch.query.filter(PostBatch.isScheduled is True,
@@ -35,6 +38,9 @@ def post_cron(app):
 
 
 def stripe_update(app):
+    """
+    Update every day stripe account, to match usage with invoicing.
+    """
     with app.app_context():
         users = User.query.filter(User.customer_id is not None).all()
         app.logger.info(f"Cron - Stripe Update subscription")

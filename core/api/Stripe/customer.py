@@ -11,6 +11,7 @@ from core.models.user import User
 
 stripe_router = Blueprint('customer', __name__)
 
+
 @stripe_router.route("/customer", methods=["POST"])
 @partial(login_required)
 def create_stripe_account(current_user: User):
