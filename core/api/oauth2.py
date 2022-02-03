@@ -15,8 +15,15 @@ oauth = Blueprint('oauth', __name__)
 @oauth.route('/authorize/<provider>', methods=["GET"])
 @partial(login_required, payment_required=True)
 def oauth_authorize(current_user: User, provider):
-    OAuthSignIn(provider).get_provider(provider).authorize(current_user)
-    return {}, 200
+    url = OAuthSignIn(provider).get_provider(provider).authorize(current_user)
+    response = redirect(url)
+    response.headers = {
+        'Authorization': 'whatever',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+    }
+    return response
 
 
 @oauth.route('/callback/<provider>', methods=["GET"])

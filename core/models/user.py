@@ -70,7 +70,21 @@ class User(db.Model):
         return len(self.accounts.all())
 
     def get_price(self):
-        return self.get_accounts() * 5
+        nb_accounts = self.get_accounts()
+        if nb_accounts <= 2:
+            return 0
+        elif 3 <= nb_accounts <= 5:
+            return 20
+        elif 6 <= nb_accounts <= 10:
+            return 30
+        elif 11 <= nb_accounts <= 30:
+            return 50
+        elif 31 <= nb_accounts <= 100:
+            return 125
+        elif 101 <= nb_accounts <= 10000:
+            return 500
+        else:
+            raise Exception("Pricing not defined")
 
     def get_end_free_trial(self):
         return datetime.fromtimestamp(self.created_at) + timedelta(days=14)

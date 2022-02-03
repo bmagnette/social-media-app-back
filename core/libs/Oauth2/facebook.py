@@ -27,8 +27,7 @@ class FacebookSignIn(OAuthSignIn):
 
         resp = requests.get(self.authorize_url, params=params)
         resp.raise_for_status()
-        webbrowser.open(resp.url)
-        return
+        return resp.url
 
     def callback(self):
         state = request.args["state"]

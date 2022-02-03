@@ -23,8 +23,7 @@ class LinkedInSignIn(OAuthSignIn):
             'scope': 'r_liteprofile,r_emailaddress,w_member_social'
         }
         response = requests.get(self.authorize_url, params=params)
-        webbrowser.open(response.url)
-        return
+        return response.url
 
     def callback(self):
         auth_code = request.args["code"]

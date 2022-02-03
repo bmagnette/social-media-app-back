@@ -32,8 +32,7 @@ class TwitterSignIn(OAuthSignIn):
 
         resp = requests.get(self.authorize_url, params=params)
         resp.raise_for_status()
-        webbrowser.open(resp.url)
-        return
+        return resp.url
 
     def get_access_token(self, auth_code):
         base64_token = base64.b64encode(f"{self.consumer_id}:{self.consumer_secret}".encode('utf-8'))
