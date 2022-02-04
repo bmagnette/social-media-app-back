@@ -16,17 +16,15 @@ from core.models.user import User
 def errors_handlers(app):
     @app.errorhandler(404)
     def not_found(e):
-        app.logger.error(str(e))
+        app.logger.error(e.description)
 
-        response = e.get_response()
         # replace the body with JSON
-        response.data = json.dumps({
+        data = json.dumps({
             "code": e.code,
             "name": e.name,
             "description": e.description,
         })
-        response.content_type = "application/json"
-        return response
+        return response_wrapper("message", data, 404)
 
     @app.errorhandler(500)
     def not_found(error):
