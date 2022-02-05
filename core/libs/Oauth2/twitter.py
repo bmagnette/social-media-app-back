@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import webbrowser
 
@@ -84,3 +85,17 @@ class TwitterSignIn(OAuthSignIn):
         """
         TO IMPLEMENT
         """
+
+    def post(self, account, message):
+        header = {
+            'Authorization': f'Bearer {account["access_token"]}',
+            'Content-type': 'application/json'
+        }
+
+        payload = {
+            'text': message
+        }
+
+        resp = requests.post(self.base_uri + '/2/tweets', json.dumps(payload), headers=header)
+        resp.raise_for_status()
+        return resp.json()

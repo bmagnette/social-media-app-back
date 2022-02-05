@@ -1,5 +1,3 @@
-import webbrowser
-
 import requests
 from flask import request
 
@@ -70,9 +68,23 @@ class LinkedInSignIn(OAuthSignIn):
         r.raise_for_status()
         return r.json()
 
-    def post(self, access_token, payload):
+    def post(self, account, message):
+        payload = {
+            "author": f'urn:li:person:{account["social_id"]}',
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": f'{message}'
+                    },
+                    "shareMediaCategory": "NONE"
+                }
+            }, "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }}
+
         header = {
-            'Authorization': f'Bearer {access_token}',
+            'Authorization': f'Bearer {account["access_token"]}',
             'cache-control': 'no-cache',
             'X-Restli-Protocol-Version': '2.0.0'
         }

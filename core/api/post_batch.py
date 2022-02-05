@@ -2,12 +2,12 @@ from functools import partial
 
 from flask import Blueprint, request
 
+from core.extensions import db
 from core.helpers.handlers import login_required, to_json, response_wrapper
-# from core.libs.Social.post import send_message
+from core.libs.Oauth2.oauth import OAuthSignIn
 from core.models.Social.account_category import AccountCategory
 from core.models.Social.post import Post
 from core.models.Social.post_batch import PostBatch
-from core.extensions import db
 from core.models.user import User
 
 batch_router = Blueprint('batch', __name__)
@@ -24,9 +24,10 @@ def add_batch(current_user: User):
     batch = PostBatch(author_id=current_user.id)
     db.session.add(batch)
     db.session.commit()
+
     for account in data["accounts"]:
-        # res = send_message(current_user.id, account, data["message"])
-        # print(res)
+        res = OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
+        print(res)
         post = Post(
             batch_id=batch.id,
             account_id=account["id"],
@@ -45,8 +46,7 @@ def add_batch(current_user: User):
     #
     #     return {}, 201
 
-    # TODO
-    return {}, 200
+    return response_wrapper('message', 'Message sent', 201)
 
 
 @batch_router.route("/batch/<_id>", methods=["PUT"])

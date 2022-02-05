@@ -7,7 +7,6 @@ import jwt
 from flask import make_response, request, jsonify, current_app
 from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
-from werkzeug.exceptions import HTTPException
 
 from core.models.Social.account import Account
 from core.models.user import User
@@ -16,26 +15,20 @@ from core.models.user import User
 def errors_handlers(app):
     @app.errorhandler(404)
     def not_found(e):
-        app.logger.error(e.description)
-
-        # replace the body with JSON
-        data = json.dumps({
-            "code": e.code,
-            "name": e.name,
-            "description": e.description,
-        })
-        return response_wrapper("message", data, 404)
+        app.logger.error(e.name + " - " + e.description)
+        return response_wrapper("message", e.name + " - " + e.description, 404)
 
     @app.errorhandler(500)
-    def not_found(error):
-        app.logger.error(str(error))
-        return {"message": error}, 500
+    def not_found(e):
+        app.logger.error(e.name + " - " + e.description)
+        return response_wrapper("message", e.name + " - " + e.description, 500)
 
     @app.errorhandler(Exception)
     def handle_exception(e):
-        if isinstance(e, HTTPException) or isinstance(e, HTTPError):
-            app.logger.error(str(e))
-            return {"message": str(e)}, 500
+        if isinstance(e, HTTPError):
+            app.logger.error(f'{e.response.status_code} - {e.response.json()["error"]["message"]}')
+            return response_wrapper('message', e.response.json()["error"]['message'], e.response.status_code)
+        return response_wrapper('message', e.name + " - " + e.description, e.response.status_code)
 
 
 def parsing_to_json(o):
