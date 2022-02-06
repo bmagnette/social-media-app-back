@@ -45,7 +45,7 @@ def add_batch(current_user: User):
             photo=''
         )
         db.session.add(post)
-        current_app.logger.info(f'{current_user.id} - Adding new message {post.social_type}')
+        current_app.logger.info(f'{current_user.id} - Adding new message {post.type}')
 
     db.session.commit()
 
