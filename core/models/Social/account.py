@@ -18,13 +18,13 @@ class MediaType(str, enum.Enum):
 
 
 def initiate_account(user, **kwargs):
-    current_app.logger.info(f'{user.id} - Adding new account')
     account = Account(
         **kwargs
     )
     db.session.add(account)
     user.accounts.append(account)
     db.session.commit()
+    current_app.logger.info(f'{user.id} - Adding new {account.social_type} account')
     return account
 
 

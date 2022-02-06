@@ -32,16 +32,16 @@ def user_registration():
                     profile=UserType.CORPORATE.value)
 
         try:
-            send_email("CronShot - Welcome", current_app.config['MAIL_DEFAULT_SENDER'], [user.email],
+            send_email("Welcome on our platform !", current_app.config['MAIL_DEFAULT_SENDER'], [user.email],
                        render_template('mail/welcome.html', user=user))
             db.session.add(user)
             db.session.commit()
+            current_app.logger.info(f'New account {user.email}')
             return response_wrapper('message', 'You are now registered ! You can log in !', 201)
         except Exception as e:
-            print(e)
-            current_app.logger.warn('Error sending email to {}'.format(user.email))
+            current_app.logger.warn(f'Error sending email to {user.email} {e}')
             return response_wrapper('message',
-                                    'An issue with your email occured, contact our service : baptiste.magnette@gmail.com',
+                                    'An issue with your email occured, contact our service : contact@cronshot.com',
                                     400)
     else:
         current_app.logger.warn('Error already registered email {}'.format(existing_email.email))

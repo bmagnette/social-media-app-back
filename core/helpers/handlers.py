@@ -26,8 +26,8 @@ def errors_handlers(app):
     @app.errorhandler(Exception)
     def handle_exception(e):
         if isinstance(e, HTTPError):
-            app.logger.error(f'{e.response.status_code} - {e.response.json()["error"]["message"]}')
-            return response_wrapper('message', e.response.json()["error"]['message'], e.response.status_code)
+            app.logger.error(f'{e.response.status_code} - {str(e.response.json())}')
+            return response_wrapper('message', str(e.response.json()), e.response.status_code)
         return response_wrapper('message', e.name + " - " + e.description, e.response.status_code)
 
 

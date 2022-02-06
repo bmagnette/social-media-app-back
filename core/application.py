@@ -13,7 +13,7 @@ from core.api.Stripe.invoices import invoice_router
 from core.api.account import account_router
 from core.api.category import category_router
 from core.api.oauth2 import oauth
-from core.api.post_batch import batch_router
+from core.api.batch import batch_router
 from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler
 from core.helpers.handlers import errors_handlers
@@ -60,9 +60,9 @@ def create_app() -> Flask:
             'secret': ''
         }
     }
-    app.config["MAIL_USE_TLS"] = False
-    app.config["MAIL_USE_SSL"] = True
-    app.config["MAIL_DEFAULT_SENDER"] = os.environ["GMAIL_EMAIL"]
+    app.config["MAIL_USE_TLS"] = True
+    app.config["MAIL_USE_SSL"] = False
+    app.config["MAIL_DEFAULT_SENDER"] = ('CronShot', os.environ["GMAIL_EMAIL"])
     app.config["MAIL_ASCII_ATTACHMENTS "] = True
     stripe.api_key = os.environ["STRIPE_SECRET"]
     app.register_blueprint(oauth, url_prefix='/oauth')

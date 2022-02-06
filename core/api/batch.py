@@ -1,6 +1,6 @@
 from functools import partial
 
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 
 from core.extensions import db
 from core.helpers.handlers import login_required, to_json, response_wrapper
@@ -22,29 +22,32 @@ def add_batch(current_user: User):
     """
     data = request.get_json()
     batch = PostBatch(author_id=current_user.id)
+
+    success_post_info = []
+    for account in data["accounts"]:
+        OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
+
+        success_post_info.append({
+            "id": account["id"],
+            "social_type": account["social_type"],
+            "message": data["message"]
+        })
+
     db.session.add(batch)
     db.session.commit()
 
-    for account in data["accounts"]:
-        res = OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
-        print(res)
+    for post_info in success_post_info:
         post = Post(
             batch_id=batch.id,
-            account_id=account["id"],
-            type=account["social_type"],
-            message=data["message"],
+            account_id=post_info["id"],
+            type=post_info["social_type"],
+            message=post_info["message"],
             photo=''
         )
         db.session.add(post)
-    db.session.commit()
+        current_app.logger.info(f'{current_user.id} - Adding new message {post.social_type}')
 
-    # if not data["isSchedule"]:
-    #     for test in []:
-    #         db.session.add()
-    #         print(test)
-    #
-    #
-    #     return {}, 201
+    db.session.commit()
 
     return response_wrapper('message', 'Message sent', 201)
 

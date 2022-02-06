@@ -19,7 +19,7 @@ class FacebookSignIn(OAuthSignIn):
     def authorize(self, current_user):
         # Scope - https://developers.facebook.com/docs/permissions/reference/
         params = {
-            'auth_type': 'reauthenticate',
+            'scope': 'email,public_profile',
             'client_id': self.consumer_id,
             'redirect_uri': self.redirect_uri,
             'state': self.generate_state_token(current_user),
