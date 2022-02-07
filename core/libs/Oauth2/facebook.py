@@ -84,7 +84,7 @@ class FacebookSignIn(OAuthSignIn):
         return resp.json()
 
     def post(self, account, message):
-        url = f"{self.base_uri}/{account['social_id']}/feed?message={message}&link=https://google.com&access_token={account['access_token']}"
+        url = f"{self.base_uri}/{account['social_id']}/feed?message={message}&access_token={account['access_token']}"
         resp = requests.post(url)
         resp.raise_for_status()
         return resp.json()
