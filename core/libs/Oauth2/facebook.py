@@ -22,6 +22,7 @@ class FacebookSignIn(OAuthSignIn):
             'scope': 'email,public_profile,pages_manage_posts,pages_show_list,pages_read_engagement,publish_to_groups',
             'auth_type': 'rerequest',
             'client_id': self.consumer_id,
+            'display': 'popup',
             'redirect_uri': self.redirect_uri,
             'state': self.generate_state_token(current_user),
         }
