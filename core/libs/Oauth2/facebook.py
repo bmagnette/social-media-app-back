@@ -11,8 +11,8 @@ from core.models.Social.account import MediaType
 class FacebookSignIn(OAuthSignIn):
     def __init__(self):
         super(FacebookSignIn, self).__init__('facebook')
-        self.authorize_url = 'https://www.facebook.com/v12.0/dialog/oauth'
-        self.access_token_url = 'https://graph.facebook.com/v12.0/oauth/access_token'
+        self.authorize_url = 'https://www.facebook.com/v13.0/dialog/oauth'
+        self.access_token_url = 'https://graph.facebook.com/v13.0/oauth/access_token'
         self.redirect_uri = os.environ["BACK_END_APP_URI"] + '/oauth/callback/facebook'
         self.base_uri = 'https://graph.facebook.com'
 
