@@ -1,6 +1,6 @@
 from functools import partial
 
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request
 
 from core.extensions import db
 from core.helpers.handlers import to_json, response_wrapper, login_required
@@ -16,14 +16,12 @@ account_router = Blueprint('account', __name__)
 def add_account(current_user: User):
     data = request.get_json()
 
-    if data:
-        existing_account = Account.query.filter_by(social_id=data["social_id"]).first()
+    for account in data["accounts"]:
+        existing_account = Account.query.filter_by(social_id=account["social_id"]).first()
         if existing_account:
-            return {"message": "An account already exist with this credentials !"}, 202
-        initiate_account(current_user, **data)
-        return response_wrapper('message', "Le compte vient d'être associé.", 201)
-    else:
-        return {"message": "Error : Account is not created"}, 400
+            continue
+        initiate_account(current_user, **account)
+    return response_wrapper('message', "Le compte vient d'être associé.", 201)
 
 
 @account_router.route("/account/<_id>", methods=["PUT"])

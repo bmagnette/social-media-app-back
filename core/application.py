@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 import os
 from datetime import datetime
@@ -6,18 +7,17 @@ import stripe
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from flask import Flask
-from flask_migrate import Migrate
 
 from core.api.Stripe.customer import stripe_router
 from core.api.Stripe.invoices import invoice_router
 from core.api.account import account_router
+from core.api.batch import batch_router
 from core.api.category import category_router
 from core.api.oauth2 import oauth
-from core.api.batch import batch_router
 from core.api.user import auth
-from core.extensions import mail, db, cors, scheduler
+from core.extensions import mail, db, cors, scheduler, migrate
 from core.helpers.handlers import errors_handlers
-from core.libs.scheduler import post_cron, stripe_update
+from core.libs.scheduler import stripe_update, post_cron, end_of_trial_email
 
 
 def create_app() -> Flask:
@@ -86,17 +86,21 @@ def register_extensions(app: Flask) -> None:
     mail.init_app(app)
     db.init_app(app)
     cors.init_app(app)
-    Migrate(app, db)
+    migrate.init_app(app, db)
 
 
 def register_schedulers(app: Flask) -> None:
-    with app.app_context():
-        scheduler.start()
+    if os.environ["env"] != "dev":
+        with app.app_context():
+            scheduler.start()
+        scheduler.add_job(end_of_trial_email, 'interval', [app], hours=24,
+                          next_run_time=(datetime.now(dt.timezone.utc)))
 
-    scheduler.add_job(post_cron, 'interval', [app], seconds=60,
-                      next_run_time=(datetime.utcnow() + relativedelta(minutes=+1)).replace(second=0))
-    scheduler.add_job(stripe_update, 'interval', [app], hours=24,
-                      next_run_time=datetime.utcnow().replace(hour=0, minute=30))
+        scheduler.add_job(post_cron, 'interval', [app], seconds=60,
+                          next_run_time=(datetime.now(dt.timezone.utc) + relativedelta(minutes=+1)).replace(second=0))
+        scheduler.add_job(stripe_update, 'interval', [app], hours=24,
+                          next_run_time=datetime.now(
+                              dt.timezone.utc).replace(hour=0, minute=30))
 
 
 def register_models(app: Flask) -> None:

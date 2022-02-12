@@ -3,7 +3,7 @@ import random
 import string
 from datetime import datetime, timedelta
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, TIMESTAMP, func
 from werkzeug.security import check_password_hash
 
 from core.extensions import db
@@ -26,23 +26,23 @@ class User(db.Model):
     __tablename__ = 'user'
     id = db.Column('user_id', db.Integer, primary_key=True)
 
-    email = db.Column(db.String, nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
 
     is_confirmed = db.Column(db.Boolean, default=True)
 
     # User Info
     right = db.Column(db.Enum(UserRight), nullable=False, default=UserRight.ADMIN)
-    profile = db.Column(db.String, nullable=False)
+    profile = db.Column(db.String(255), nullable=False)
 
-    organization = db.Column(db.String, nullable=True)
-    first_name = db.Column(db.String, nullable=True)
-    last_name = db.Column(db.String, nullable=True)
+    organization = db.Column(db.String(255), nullable=True)
+    first_name = db.Column(db.String(255), nullable=True)
+    last_name = db.Column(db.String(255), nullable=True)
 
     # Date
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    last_login = db.Column(db.Float, default=None)
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    last_login = db.Column(TIMESTAMP(True), default=None)
 
     # Many to many relationship
     accounts = db.relationship('Account', secondary=accounts, lazy='dynamic',
@@ -54,7 +54,7 @@ class User(db.Model):
     posted = db.relationship("PostBatch", back_populates="author")
     invoices = db.relationship("Invoice", back_populates="user")
 
-    sponsor_id = db.Column(db.String,
+    sponsor_id = db.Column(db.String(15),
                            default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
 
     # One to One
@@ -87,4 +87,4 @@ class User(db.Model):
             raise Exception("Pricing not defined")
 
     def get_end_free_trial(self):
-        return datetime.fromtimestamp(self.created_at) + timedelta(days=14)
+        return self.created_at + timedelta(days=14)

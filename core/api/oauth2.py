@@ -23,6 +23,7 @@ def oauth_authorize(current_user: User, provider):
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
     }
+    print(url)
     return response_wrapper('content', url, 200)
 
 

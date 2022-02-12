@@ -1,4 +1,4 @@
-from datetime import datetime
+from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
 from core.models.Social.account import MediaType
@@ -15,10 +15,12 @@ class Post(db.Model):
     account_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
     account = db.relationship('Account', back_populates="posts")
 
-    type = db.Column(db.Enum(MediaType), nullable=False)
+    social_id = db.Column(db.String, nullable=True)
+
+    type = db.Column(db.String, nullable=False)
 
     message = db.Column(db.String, nullable=False)
     photo = db.Column(db.Text(), nullable=True)
 
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())

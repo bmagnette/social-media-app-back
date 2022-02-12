@@ -31,12 +31,16 @@ class LinkedInSignIn(OAuthSignIn):
         linkedin_info = self.get_user(access_token)
 
         payload = {
-            "social_type": MediaType.LINKEDIN.value,
-            "social_id": linkedin_info["id"],
-            "name": linkedin_info["localizedLastName"] + " " + linkedin_info["localizedFirstName"],
-            "profile_picture": linkedin_info["profilePicture"]["displayImage"],
-            "expired_in": 60 * 24 * 60 * 60,  # in seconds,
-            "access_token": access_token
+            "accounts": [
+                {
+                    "social_type": MediaType.LINKEDIN.value,
+                    "social_id": linkedin_info["id"],
+                    "name": linkedin_info["localizedLastName"] + " " + linkedin_info["localizedFirstName"],
+                    "profile_picture": linkedin_info["profilePicture"]["displayImage"],
+                    "expired_in": 60 * 24 * 60 * 60,  # in seconds,
+                    "access_token": access_token
+                }
+            ]
         }
 
         return payload, state
@@ -90,4 +94,4 @@ class LinkedInSignIn(OAuthSignIn):
         }
         r = requests.post(self.base_url + "/ugcPosts", headers=header, json=payload)
         r.raise_for_status()
-        return r.json()
+        return r.json()["id"]

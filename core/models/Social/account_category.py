@@ -1,10 +1,11 @@
-from datetime import datetime
+from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
 from core.models.Social.account import Account
 
 categories = db.Table('category_join',
-                      db.Column('category_id', db.Integer, db.ForeignKey('account_category.category_id'), primary_key=True),
+                      db.Column('category_id', db.Integer, db.ForeignKey('account_category.category_id'),
+                                primary_key=True),
                       db.Column('user_id', db.Integer, db.ForeignKey('user.user_id'), primary_key=True)
                       )
 
@@ -36,5 +37,5 @@ class AccountCategory(db.Model):
     accounts = db.relationship("Account", uselist=True, back_populates="category")
 
     logo = db.Column(db.Text(), nullable=True)
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())

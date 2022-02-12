@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from functools import partial
+import datetime as dt
 
 import jwt
 import stripe
@@ -66,10 +67,12 @@ def login():
             current_app.logger.info('Login {} - Compte non confirmé'.format(data["username"]))
             return response_wrapper('message', "You need to validate your account to connect it!", 402)
 
-        user.last_login = datetime.utcnow().timestamp()
+        user.last_login = datetime.now(
+                dt.timezone.utc)
         db.session.commit()
 
-        token = jwt.encode({'id': user.id, 'exp': datetime.utcnow() + timedelta(minutes=240)},
+        token = jwt.encode({'id': user.id, 'exp': datetime.now(
+                dt.timezone.utc) + timedelta(minutes=240)},
                            current_app.config['SECRET_KEY'])
 
         current_app.logger.info('Login {} - Success'.format(data["username"]))

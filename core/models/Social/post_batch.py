@@ -1,4 +1,4 @@
-from datetime import datetime
+from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
 
@@ -13,12 +13,8 @@ class PostBatch(db.Model):
 
     posts = db.relationship("Post", back_populates="batch")
 
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    schedule_date = db.Column(TIMESTAMP(True), nullable=True)
 
     isScheduled = db.Column(db.Boolean, default=False)
-    schedule_date = db.Column(db.Float, nullable=True)
-    schedule_hour = db.Column(db.Float, nullable=True)
-    schedule_minute = db.Column(db.Float, nullable=True)
-
-

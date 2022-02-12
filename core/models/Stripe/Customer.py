@@ -1,10 +1,11 @@
+import datetime as dt
 from datetime import datetime
 
 import stripe
+from sqlalchemy import TIMESTAMP, func
 from sqlalchemy.orm import relationship
 
 from core.extensions import db
-from core.models.user import User
 
 
 def delete(id):
@@ -18,8 +19,8 @@ class Customer(db.Model):
 
     stripe_id = db.Column('stripe_id', db.String, unique=True)
 
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
     user = relationship("User", uselist=False, backref="stripe_customer")
     user_id = db.Column('user_id', db.Integer)
@@ -81,7 +82,8 @@ class Customer(db.Model):
 
         stripe.SubscriptionSchedule.create(
             customer=_id,
-            start_date=datetime.utcnow().timestamp(),
+            start_date=datetime.now(
+                dt.timezone.utc),
             end_behavior="release",
             phases=[
                 {

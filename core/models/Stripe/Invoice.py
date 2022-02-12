@@ -1,5 +1,6 @@
-from datetime import datetime
 import enum
+
+from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
 
@@ -18,8 +19,8 @@ class Invoice(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
     user = db.relationship('User', back_populates="invoices", single_parent=True)
 
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
-    updated_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
     format_date = db.Column(db.String, nullable=False)
 

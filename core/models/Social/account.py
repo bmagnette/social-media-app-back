@@ -1,19 +1,21 @@
 import enum
-from datetime import datetime
 
 from flask import current_app
+from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
 
 
 class MediaType(str, enum.Enum):
+    FACEBOOK_PAGE = "FACEBOOK_PAGE"
+    FACEBOOK_GROUP = "FACEBOOK_GROUP"
+    FACEBOOK = "FACEBOOK"
+    PINTEREST = "PINTEREST"
     LINKEDIN = "LINKEDIN"
     INSTAGRAM = "INSTAGRAM"
-    FACEBOOK = "FACEBOOK"
     TWITTER = "TWITTER"
 
     def __str__(self):
-        print("jere")
         return self.value
 
 
@@ -44,16 +46,14 @@ class Account(db.Model):
 
     posts = db.relationship("Post", back_populates="account", cascade="all, delete-orphan")
 
-    social_type = db.Column(db.Enum(MediaType), nullable=False)
+    social_type = db.Column(db.String, nullable=False)
     social_id = db.Column(db.String, nullable=False)
 
-    locale = db.Column(db.String, nullable=True)
-
-    name = db.Column(db.String, nullable=True)
+    name = db.Column(db.String(255), nullable=True)
 
     profile_picture = db.Column(db.Text())
 
-    created_at = db.Column(db.Float, default=datetime.utcnow().timestamp())
+    created_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
     access_token = db.Column(db.String, nullable=False)
     refresh_token = db.Column(db.String, nullable=True)

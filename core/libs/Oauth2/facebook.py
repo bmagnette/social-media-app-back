@@ -1,5 +1,4 @@
 import os
-import webbrowser
 
 import requests
 from flask import request
@@ -11,19 +10,20 @@ from core.models.Social.account import MediaType
 class FacebookSignIn(OAuthSignIn):
     def __init__(self):
         super(FacebookSignIn, self).__init__('facebook')
-        self.authorize_url = 'https://www.facebook.com/v12.0/dialog/oauth'
-        self.access_token_url = 'https://graph.facebook.com/v12.0/oauth/access_token'
+        self.authorize_url = 'https://www.facebook.com/dialog/oauth'
+        self.access_token_url = 'https://graph.facebook.com/oauth/access_token'
         self.redirect_uri = os.environ["BACK_END_APP_URI"] + '/oauth/callback/facebook'
         self.base_uri = 'https://graph.facebook.com'
 
     def authorize(self, current_user):
         # Scope - https://developers.facebook.com/docs/permissions/reference/
         params = {
-            'scope': 'email,public_profile,pages_manage_posts,pages_show_list,pages_read_engagement,publish_to_groups',
-            'auth_type': 'reauthenticate',
+            'scope': 'email,pages_manage_posts,pages_show_list,pages_read_engagement,publish_to_groups',
+            'auth_type': 'rerequest',
             'client_id': self.consumer_id,
             'redirect_uri': self.redirect_uri,
             'state': self.generate_state_token(current_user),
+            'response_type': 'code',
         }
 
         resp = requests.get(self.authorize_url, params=params)
@@ -36,21 +36,31 @@ class FacebookSignIn(OAuthSignIn):
         access_token = self.get_access_token()
         fb_info = self.get_user_info(access_token)
         pages = self.get_pages(access_token)
-        groups = self.get_groups(access_token)
+        # groups = self.get_groups(access_token)
+
+        payload = {
+            "accounts": [
+                {
+                    "social_type": MediaType.FACEBOOK.value,
+                    "social_id": fb_info["id"],
+                    "name": fb_info["name"],
+                    "profile_picture": '',
+                    "expired_in": 60 * 24 * 60 * 60,  # in seconds
+                    "access_token": access_token
+                }
+            ]
+        }
 
         for page in pages["data"]:
             page_id, page_access_token, page_name = page["id"], page["access_token"], page["name"]
-            print(page_id, page_name, page_access_token)
-        print(pages)
-        print(groups)
-        payload = {
-            "social_type": MediaType.FACEBOOK.value,
-            "social_id": fb_info["id"],
-            "name": fb_info["name"],
-            "profile_picture": '',
-            "expired_in": 60 * 24 * 60 * 60,  # in seconds
-            "access_token": access_token
-        }
+            payload["accounts"].append({
+                "social_type": MediaType.FACEBOOK_PAGE.value,
+                "social_id": page_id,
+                "name": page_name,
+                "profile_picture": '',
+                "expired_in": 60 * 24 * 60 * 60,  # in seconds
+                "access_token": page_access_token
+            })
 
         return payload, state
 
@@ -88,7 +98,7 @@ class FacebookSignIn(OAuthSignIn):
         url = f"{self.base_uri}/{account['social_id']}/feed?message={message}&access_token={account['access_token']}"
         resp = requests.post(url)
         resp.raise_for_status()
-        return resp.json()
+        return resp.json()["id"]
 
     def get_access_token(self):
         auth_code = request.args["code"]

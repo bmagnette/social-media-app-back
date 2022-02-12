@@ -47,8 +47,8 @@ def create_stripe_account(current_user: User):
 
         sub = stripe.Subscription.create(
             customer=customer.stripe_id,
-            billing_cycle_anchor=int(current_user.get_end_free_trial().timestamp()),
-            trial_end=int(current_user.get_end_free_trial().timestamp()),
+            billing_cycle_anchor=int(current_user.get_end_free_trial()),
+            trial_end=int(current_user.get_end_free_trial()),
             billing_thresholds={
                 "amount_gte": 500
             },

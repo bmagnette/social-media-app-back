@@ -1,3 +1,5 @@
+import datetime as dt
+from datetime import datetime
 from functools import partial
 
 from flask import Blueprint, request, current_app
@@ -21,15 +23,25 @@ def add_batch(current_user: User):
     Sinon enregistrer un Scheduler/Queue en attente.
     """
     data = request.get_json()
-    batch = PostBatch(author_id=current_user.id)
+    print(data)
+
+    batch_params = {
+        "author_id": current_user.id,
+        "isScheduled": data["isScheduling"] if "isScheduling" in data else False,
+        "schedule_date": datetime.fromisoformat(data["scheduleTime"][:-1]) if "isScheduling" in data else None,
+    }
+    batch = PostBatch(**batch_params)
 
     success_post_info = []
     for account in data["accounts"]:
-        OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
+        _id = None
+        if "isScheduling" not in data:
+            _id = OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
 
         success_post_info.append({
             "id": account["id"],
             "social_type": account["social_type"],
+            "social_id": _id,
             "message": data["message"]
         })
 
@@ -41,6 +53,7 @@ def add_batch(current_user: User):
             batch_id=batch.id,
             account_id=post_info["id"],
             type=post_info["social_type"],
+            social_id=post_info["social_id"],
             message=post_info["message"],
             photo=''
         )

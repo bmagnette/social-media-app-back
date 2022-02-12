@@ -1,3 +1,4 @@
+import datetime as dt
 import os
 from datetime import datetime, timedelta
 
@@ -24,7 +25,8 @@ class OAuthSignIn(object):
         pass
 
     def generate_state_token(self, current_user):
-        return jwt.encode({'id': current_user.id, 'exp': datetime.utcnow() + timedelta(minutes=self.time_out)},
+        return jwt.encode({'id': current_user.id, 'exp': datetime.now(
+                dt.timezone.utc) + timedelta(minutes=self.time_out)},
                           current_app.config['SECRET_KEY'])
 
     def get_callback_url(self):
@@ -41,4 +43,5 @@ class OAuthSignIn(object):
             for provider_class in self.__subclasses__():
                 provider = provider_class()
                 self.providers[provider.provider_name] = provider
+        provider_name = "facebook" if provider_name in ["facebook_page"] else provider_name
         return self.providers[provider_name]

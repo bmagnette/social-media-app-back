@@ -62,13 +62,17 @@ class TwitterSignIn(OAuthSignIn):
         twitter_info = self.get_user_info(resp["access_token"])
 
         payload = {
-            "access_token": resp["access_token"],
-            "refresh_token": resp["refresh_token"],
-            "expired_in": 7200,
-            "profile_picture": "",
-            "social_id": twitter_info["data"]["id"],
-            "name": twitter_info["data"]["username"],
-            "social_type": MediaType.TWITTER.value
+            "accounts": [
+                {
+                    "access_token": resp["access_token"],
+                    "refresh_token": resp["refresh_token"],
+                    "expired_in": 7200,
+                    "profile_picture": "",
+                    "social_id": twitter_info["data"]["id"],
+                    "name": twitter_info["data"]["username"],
+                    "social_type": MediaType.TWITTER.value
+                }
+            ]
         }
 
         return payload, state
@@ -98,4 +102,4 @@ class TwitterSignIn(OAuthSignIn):
 
         resp = requests.post(self.base_uri + '/2/tweets', json.dumps(payload), headers=header)
         resp.raise_for_status()
-        return resp.json()
+        return resp.json()["data"]["id"]

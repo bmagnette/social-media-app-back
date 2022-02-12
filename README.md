@@ -1,11 +1,7 @@
 Social Media Scheduler
 
 - Add photo
-- Ajouter un réseau social Facebook.
-- Schedule un post sur deux réseaux sociaux.
-- Afficher le schédule dans le calendrier.
 - Ajouter un réseau social Instagram
-- Faire une page simple responsive avec un nom de domaine. 45€
 
 Commencer à échanger avant toutes ces étapes : 
 - Faire fonctionner de multiples connexion à un même Réseaux social pour l'envoie.
@@ -17,3 +13,13 @@ Commencer à échanger avant toutes ces étapes :
 - Short URL option
 - GIF option
 
+### Update database
+cd social-media-scheduler-back\core\models
+set FLASK_APP=core.models.db_upgrade.py
+
+ONLY first time -> flask db init
+
+Then -> Each time you want to update db :
+flask db migrate
+
+flask db upgrade
