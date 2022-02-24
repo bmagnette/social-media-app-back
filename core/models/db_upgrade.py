@@ -24,7 +24,7 @@ def create_app():
     load_dotenv(dotenv_path=str(dir_path.parent.parent) + '/.env')
 
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["SQLALCHEMY_DATABASE_URI"]
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["SQLALCHEMY_DATABASE_URI_PROD"]
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
     db.init_app(app)

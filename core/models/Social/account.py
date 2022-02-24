@@ -52,7 +52,7 @@ class Account(db.Model):
     name = db.Column(db.String(255), nullable=True)
 
     profile_picture = db.Column(db.Text())
-    profile_img = db.Column(db.Text(10000000))
+    profile_img = db.Column(db.Text())
 
     created_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
