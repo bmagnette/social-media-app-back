@@ -1,7 +1,6 @@
 from sqlalchemy import TIMESTAMP, func
 
 from core.extensions import db
-from core.models.Social.account import MediaType
 
 
 class Post(db.Model):

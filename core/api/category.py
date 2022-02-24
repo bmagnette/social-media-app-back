@@ -36,7 +36,6 @@ def edit_category(current_user: User, _id: int):
         acc = Account.query.filter_by(id=account["id"]).first_or_404()
         category.accounts.append(acc)
     category.label = data["categoryName"]
-    category.description = data["categoryDescription"]
 
     db.session.commit()
     return {}, 200

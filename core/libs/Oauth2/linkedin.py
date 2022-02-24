@@ -29,6 +29,7 @@ class LinkedInSignIn(OAuthSignIn):
 
         access_token = self.get_access_token(auth_code)
         linkedin_info = self.get_user(access_token)
+        photo_uri = self.get_as_base64(self.get_photo(access_token))
 
         payload = {
             "accounts": [
@@ -38,7 +39,8 @@ class LinkedInSignIn(OAuthSignIn):
                     "name": linkedin_info["localizedLastName"] + " " + linkedin_info["localizedFirstName"],
                     "profile_picture": linkedin_info["profilePicture"]["displayImage"],
                     "expired_in": 60 * 24 * 60 * 60,  # in seconds,
-                    "access_token": access_token
+                    "access_token": access_token,
+                    "profile_img": photo_uri.decode()
                 }
             ]
         }
@@ -71,6 +73,19 @@ class LinkedInSignIn(OAuthSignIn):
         r = requests.get(self.base_url + '/me', headers=header)
         r.raise_for_status()
         return r.json()
+
+    def get_photo(self, access_token):
+        header = {
+            'Authorization': f'Bearer {access_token}',
+            'cache-control': 'no-cache',
+            'X-Restli-Protocol-Version': '2.0.0'
+        }
+
+        resp = requests.get(
+            self.base_url + "/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))",
+            headers=header)
+        resp.raise_for_status()
+        return resp.json()["profilePicture"]["displayImage~"]["elements"][0]["identifiers"][0]["identifier"]
 
     def post(self, account, message):
         payload = {

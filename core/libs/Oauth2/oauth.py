@@ -1,8 +1,10 @@
+import base64
 import datetime as dt
 import os
 from datetime import datetime, timedelta
 
 import jwt
+import requests
 from flask import current_app, url_for
 
 
@@ -32,6 +34,10 @@ class OAuthSignIn(object):
     def get_callback_url(self):
         return url_for('oauth.oauth_callback', provider=self.provider_name, _external=True)
 
+    @staticmethod
+    def get_as_base64(url):
+        return base64.b64encode(requests.get(url).content)
+
     @classmethod
     def get_provider(self, provider_name):
         from .twitter import TwitterSignIn
@@ -43,5 +49,5 @@ class OAuthSignIn(object):
             for provider_class in self.__subclasses__():
                 provider = provider_class()
                 self.providers[provider.provider_name] = provider
-        provider_name = "facebook" if provider_name in ["facebook_page"] else provider_name
+        provider_name = "facebook" if provider_name in ["facebook_page", "facebook_group"] else provider_name
         return self.providers[provider_name]

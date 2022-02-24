@@ -1,4 +1,5 @@
 import os
+from base64 import b64encode
 
 import requests
 from flask import request
@@ -24,7 +25,6 @@ class FacebookSignIn(OAuthSignIn):
             'redirect_uri': self.redirect_uri,
             'state': self.generate_state_token(current_user),
         }
-
         resp = requests.get(self.authorize_url, params=params)
         resp.raise_for_status()
         return resp.url
@@ -33,32 +33,50 @@ class FacebookSignIn(OAuthSignIn):
         state = request.args["state"]
 
         access_token = self.get_access_token()
-        fb_info = self.get_user_info(access_token)
+        # fb_info = self.get_user_info(access_token)
+        # picture = self.get_picture(fb_info["id"], access_token)
+
         pages = self.get_pages(access_token)
-        # groups = self.get_groups(access_token)
+        groups = self.get_groups(access_token)
 
         payload = {
             "accounts": [
-                {
-                    "social_type": MediaType.FACEBOOK.value,
-                    "social_id": fb_info["id"],
-                    "name": fb_info["name"],
-                    "profile_picture": '',
-                    "expired_in": 60 * 24 * 60 * 60,  # in seconds
-                    "access_token": access_token
-                }
+                # {
+                #     "social_type": MediaType.FACEBOOK.value,
+                #     "social_id": fb_info["id"],
+                #     "name": fb_info["name"],
+                #     "profile_picture": '',
+                #     "expired_in": 60 * 24 * 60 * 60,  # in seconds
+                #     "access_token": access_token,
+                #     "profile_img": picture
+                # }
             ]
         }
 
         for page in pages["data"]:
             page_id, page_access_token, page_name = page["id"], page["access_token"], page["name"]
+            picture = self.get_picture(page_id, page_access_token)
             payload["accounts"].append({
                 "social_type": MediaType.FACEBOOK_PAGE.value,
                 "social_id": page_id,
                 "name": page_name,
                 "profile_picture": '',
                 "expired_in": 60 * 24 * 60 * 60,  # in seconds
-                "access_token": page_access_token
+                "access_token": page_access_token,
+                "profile_img": picture
+            })
+
+        for group in groups["data"]:
+            name, _id, icon = group["name"], group["id"], group["icon"]
+            picture = self.get_picture(_id, access_token)
+            payload["accounts"].append({
+                "social_type": MediaType.FACEBOOK_GROUP.value,
+                "social_id": _id,
+                "name": name,
+                "profile_picture": '',
+                "access_token": access_token,
+                "expired_in": 60 * 24 * 60 * 90,  # in seconds
+                "profile_img": picture
             })
 
         return payload, state
@@ -68,6 +86,12 @@ class FacebookSignIn(OAuthSignIn):
             f'{self.base_uri}/me?access_token={access_token}')
         resp.raise_for_status()
         return resp.json()
+
+    def get_picture(self, user_id, access_token):
+        resp = requests.get(
+            f'{self.base_uri}/{user_id}/picture?access_token={access_token}')
+        resp.raise_for_status()
+        return b64encode(resp.content).decode()
 
     def get_pages(self, access_token):
         url = f"{self.base_uri}/v12.0/me/accounts?fields=name,access_token&access_token={access_token}"
@@ -82,8 +106,11 @@ class FacebookSignIn(OAuthSignIn):
         return resp.json()
 
     def get_groups(self, access_token):
-        url = f"{self.base_uri}/v12.0/me/groups?access_token={access_token}"
-        resp = requests.get(url)
+        params = {
+            "admin_only": True
+        }
+        url = f"{self.base_uri}/v12.0/me/groups?fields=name,icon&access_token={access_token}"
+        resp = requests.get(url, params=params)
         resp.raise_for_status()
         return resp.json()
 

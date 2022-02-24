@@ -29,8 +29,8 @@ def errors_handlers(app):
         if isinstance(e, HTTPError):
             app.logger.error(f'{e.response.status_code} - {str(e.response.json())}')
             return response_wrapper('message', str(e.response.json()), e.response.status_code)
-        print(e)
-        return response_wrapper('message', e.name + " - " + e.description, e.response.status_code)
+        app.logger.error(str(e))
+        return response_wrapper('message', str(e), 500)
 
 
 def parsing_to_json(o):
@@ -42,6 +42,8 @@ def parsing_to_json(o):
         return o.__dict__
     if isinstance(o, datetime):
         return datetime.timestamp(o)
+    if isinstance(o, memoryview):
+        return o.tobytes().decode()
     return o
 
 

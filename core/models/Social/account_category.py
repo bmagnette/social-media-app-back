@@ -13,7 +13,6 @@ categories = db.Table('category_join',
 def initiate_account_category(current_user, data):
     category = AccountCategory(
         label=data["categoryName"],
-        description=data["categoryDescription"],
         logo="",
     )
     db.session.add(category)
@@ -33,7 +32,6 @@ class AccountCategory(db.Model):
     id = db.Column('category_id', db.Integer, primary_key=True)
 
     label = db.Column(db.String, nullable=False)
-    description = db.Column(db.String, nullable=True)
     accounts = db.relationship("Account", uselist=True, back_populates="category")
 
     logo = db.Column(db.Text(), nullable=True)
