@@ -35,7 +35,7 @@ def create_stripe_account(current_user: User):
             customer = Customer.query.filter_by(id=current_user.customer_id).first_or_404()
             return response_wrapper('message', 'Not implemented yet.', 400)
         else:
-            stripe_customer = stripe.Customer.create(description=current_user.profile,
+            stripe_customer = stripe.Customer.create(description=current_user.email,
                                                      email=current_user.email,
                                                      source=token["id"])
 
