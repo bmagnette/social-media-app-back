@@ -1,13 +1,14 @@
 import base64
 import json
 import os
-import webbrowser
 
 import requests
-from flask import request
+from flask import request, current_app
+from sqlalchemy import func
 
+from core.extensions import db
 from core.libs.Oauth2.oauth import OAuthSignIn
-from core.models.Social.account import MediaType
+from core.models.Social.account import MediaType, Account
 
 
 class TwitterSignIn(OAuthSignIn):
@@ -85,21 +86,48 @@ class TwitterSignIn(OAuthSignIn):
         resp.raise_for_status()
         return resp.json()
 
-    def refresh_token(self):
+    def refresh_token(self, refresh_token):
         """
-        TO IMPLEMENT
+        Refresh token on 401.
         """
+        base64_token = base64.b64encode(f"{self.consumer_id}:{self.consumer_secret}".encode('utf-8'))
 
-    def post(self, account, message):
         header = {
-            'Authorization': f'Bearer {account["access_token"]}',
-            'Content-type': 'application/json'
+            'Content-Type': 'application/x-www-form-urlencoded',
+            "Authorization": f"Basic {base64_token.decode('utf-8')}",
         }
 
         payload = {
-            'text': message
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+            "client_id": self.consumer_id
         }
 
-        resp = requests.post(self.base_uri + '/2/tweets', json.dumps(payload), headers=header)
+        resp = requests.post(self.access_token_url, data=payload, headers=header)
+        resp.raise_for_status()
+        return resp.json()
+
+    def post(self, account, message):
+        def post_request(_token, _message):
+            return requests.post(self.base_uri + '/2/tweets', json.dumps({
+                'text': _message
+            }), headers={
+                'Authorization': f'Bearer {_token}',
+                'Content-type': 'application/json'
+            })
+
+        resp = post_request(account["access_token"], message)
+        if resp.status_code == 401:
+            token = self.refresh_token(account["refresh_token"])
+            account = Account.query.filter_by(id=account["id"]).first_or_404()
+            account.refresh_token = token["refresh_token"]
+            account.access_token = token["access_token"]
+            account.created_at = func.now()
+            db.session.merge(account)
+            db.session.commit()
+            current_app.logger.info(f'Refreshing token {account.type}')
+
+            resp = post_request(token["access_token"], message)
+
         resp.raise_for_status()
         return resp.json()["data"]["id"]

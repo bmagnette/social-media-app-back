@@ -16,7 +16,7 @@ from core.models.Social.post_batch import PostBatch
 from core.models.Social.account_category import AccountCategory, categories
 from core.models.Stripe import Customer
 from core.models.Stripe import Invoice
-from core.models.user import UserType, UserRight, User
+from core.models.user import UserType, UserType, User
 
 
 def create_app():

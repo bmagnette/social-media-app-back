@@ -10,6 +10,7 @@ from requests.exceptions import HTTPError
 from sqlalchemy.orm.state import InstanceState
 
 from core.models.Social.account import Account
+from core.models.Social.account_category import AccountCategory, AccessType
 from core.models.user import User
 
 
@@ -40,6 +41,10 @@ def parsing_to_json(o):
         return None
     if isinstance(o, Account):
         return o.__dict__
+    if isinstance(o, AccessType):
+        return o.__dict__
+    if isinstance(o, AccountCategory):
+        return o.__dict__
     if isinstance(o, datetime):
         return datetime.timestamp(o)
     if isinstance(o, memoryview):
@@ -57,8 +62,8 @@ def response_wrapper(content_type, content, http_code):
 
 
 def to_json(data):
-    if '_sa_instance_state' in data:
-        del data["_sa_instance_state"]
+    # if '_sa_instance_state' in data:
+    #     del data["_sa_instance_state"]
     return data
 
 
@@ -81,7 +86,7 @@ def login_required(f, payment_required=False):
 
         current_user = User.query.filter_by(id=data["id"]).first_or_404()
 
-        if payment_required and not current_user.customer_id and current_user.get_end_free_trial() < datetime.now(
+        if current_user.get_price() != 0 and payment_required and not current_user.customer_id and current_user.get_end_free_trial() < datetime.now(
                 dt.timezone.utc):
             return response_wrapper('message', 'Payment Required, update your card info.', 402)
 

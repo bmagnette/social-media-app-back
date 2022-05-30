@@ -74,7 +74,7 @@ def create_app() -> Flask:
     app.register_blueprint(stripe_router, url_prefix='/stripe')
     app.register_blueprint(invoice_router, url_prefix='/stripe')
 
-    errors_handlers(app)
+    #errors_handlers(app)
     register_extensions(app)
     register_models(app)
     register_schedulers(app)
@@ -105,4 +105,5 @@ def register_schedulers(app: Flask) -> None:
 
 def register_models(app: Flask) -> None:
     with app.app_context():
+        # db.drop_all()
         db.create_all()

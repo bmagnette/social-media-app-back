@@ -8,7 +8,7 @@ class PostBatch(db.Model):
 
     id = db.Column('batch_id', db.Integer, primary_key=True)
 
-    author_id = db.Column(db.Integer, db.ForeignKey('user.user_id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     author = db.relationship('User', back_populates="posted")
 
     posts = db.relationship("Post", back_populates="batch")
