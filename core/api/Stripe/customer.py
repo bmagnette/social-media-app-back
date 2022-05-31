@@ -57,7 +57,7 @@ def create_stripe_account(current_user: User):
             billing_cycle_anchor=first_payment,
             trial_end=first_payment,
             billing_thresholds={
-                "amount_gte": 50
+                "amount_gte": 5000
             },
             items=[
                 {
