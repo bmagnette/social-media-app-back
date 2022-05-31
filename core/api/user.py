@@ -140,7 +140,7 @@ def create_user(current_user: User):
     else:
         random_password = ''.join(random.choice(string.ascii_lowercase) for i in range(8))
         user = User(email=data['email'], password=generate_password_hash(random_password), user_type=UserType.USER,
-                    admin_id=current_user.id, last_name=data["name"])
+                    admin_id=current_user.id, last_name=data["name"], sponsor_id=current_user.sponsor_id)
         db.session.add(user)
         if not data["groups"]:
             return response_wrapper('message', "Select a group", 400)

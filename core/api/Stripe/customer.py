@@ -56,9 +56,6 @@ def create_stripe_account(current_user: User):
             customer=customer.stripe_id,
             billing_cycle_anchor=first_payment,
             trial_end=first_payment,
-            billing_thresholds={
-                "amount_gte": 5000
-            },
             items=[
                 {
                     "price": "price_1L5X8AGHalnQ9em2Jr5b3Ndn",
