@@ -61,7 +61,7 @@ def create_stripe_account(current_user: User):
             },
             items=[
                 {
-                    "price": "price_1KK3v8GHalnQ9em2kXER9gwj",
+                    "price": "price_1L5X8AGHalnQ9em2Jr5b3Ndn",
                     "quantity": current_user.get_accounts(),
                 },
                 {
