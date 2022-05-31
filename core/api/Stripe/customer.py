@@ -52,7 +52,7 @@ def create_stripe_account(current_user: User):
         print(first_payment)
         logger.info(first_payment)
         logger.info(int(current_user.get_end_free_trial().timestamp()))
-        logger.info(datetime.utcnow().timestamp())
+        logger.info("TEST", int(datetime.utcnow().timestamp()))
         if int(current_user.get_end_free_trial().timestamp()) <= int(datetime.utcnow().timestamp()):
             logger.info("in")
             first_payment = int((datetime.utcnow() + timedelta(hours=5)).timestamp())
