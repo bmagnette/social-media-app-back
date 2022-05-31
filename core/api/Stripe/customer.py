@@ -58,7 +58,7 @@ def create_stripe_account(current_user: User):
             trial_end=first_payment,
             items=[
                 {
-                    "price": "price_1L5X8AGHalnQ9em2Jr5b3Ndn",
+                    "price": "price_1L5Y3eGHalnQ9em2pncEzPbz",
                     "quantity": current_user.get_accounts(),
                 },
                 {
