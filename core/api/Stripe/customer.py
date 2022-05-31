@@ -19,7 +19,7 @@ stripe_router = Blueprint('customer', __name__)
 @partial(login_required)
 def create_stripe_account(current_user: User):
     data = request.get_json()
-    print(int(current_user.get_end_free_trial().timestamp()))
+
     try:
         try:
             token = stripe.Token.create(
@@ -49,19 +49,13 @@ def create_stripe_account(current_user: User):
         db.session.commit()
 
         first_payment = int(current_user.get_end_free_trial().timestamp())
-        print(first_payment)
-        logger.info(first_payment)
-        logger.info(int(current_user.get_end_free_trial().timestamp()))
-        logger.info("TEST", int(datetime.utcnow().timestamp()))
-        if int(current_user.get_end_free_trial().timestamp()) <= int(datetime.utcnow().timestamp()):
-            logger.info("in")
-            first_payment = int((datetime.utcnow() + timedelta(hours=5)).timestamp())
-        logger.info(first_payment)
+        if first_payment <= int(datetime.utcnow().timestamp()):
+            first_payment = int((datetime.utcnow() + timedelta(days=1)).timestamp())
 
         sub = stripe.Subscription.create(
             customer=customer.stripe_id,
             billing_cycle_anchor=first_payment,
-            trial_end=int(current_user.get_end_free_trial().timestamp()),
+            trial_end=first_payment,
             billing_thresholds={
                 "amount_gte": 500
             },
