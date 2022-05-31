@@ -3,7 +3,7 @@ from functools import partial
 import stripe
 from flask import request, Blueprint
 from stripe.error import CardError
-
+from datetime import datetime, timedelta
 from core.extensions import db
 from core.helpers.handlers import response_wrapper, login_required
 from core.models.Stripe.Customer import Customer
@@ -28,7 +28,6 @@ def create_stripe_account(current_user: User):
                 },
             )
         except CardError as e:
-            print(e)
             return response_wrapper("message", e.error.message, 400)
 
         if current_user.customer_id:
@@ -46,9 +45,13 @@ def create_stripe_account(current_user: User):
         current_user.customer_id = customer.id
         db.session.commit()
 
+        first_payment = int(current_user.get_end_free_trial().timestamp())
+        if int(current_user.get_end_free_trial().timestamp()) <= datetime.utcnow().timestamp():
+            first_payment = int((datetime.utcnow() + timedelta(hours=1)).timestamp())
+
         sub = stripe.Subscription.create(
             customer=customer.stripe_id,
-            billing_cycle_anchor=int(current_user.get_end_free_trial().timestamp()),
+            billing_cycle_anchor=first_payment,
             trial_end=int(current_user.get_end_free_trial().timestamp()),
             billing_thresholds={
                 "amount_gte": 500
@@ -69,4 +72,4 @@ def create_stripe_account(current_user: User):
 
         return response_wrapper('message', 'Card added with success ! ', 201)
     except Exception as e:
-        return response_wrapper('message', e, 500)
+        return response_wrapper('message', str(e), 500)
