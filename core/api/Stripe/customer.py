@@ -28,27 +28,28 @@ def create_stripe_account(current_user: User):
                 },
             )
         except CardError as e:
+            print(e)
             return response_wrapper("message", e.error.message, 400)
 
         if current_user.customer_id:
             # Update card on user:
             customer = Customer.query.filter_by(id=current_user.customer_id).first_or_404()
             return response_wrapper('message', 'Not implemented yet.', 400)
-        else:
-            stripe_customer = stripe.Customer.create(description=current_user.email,
-                                                     email=current_user.email,
-                                                     source=token["id"])
 
-            customer = Customer(stripe_id=stripe_customer["id"], user_id=current_user.id, card_id=token["card"]["id"])
-            db.session.add(customer)
-            db.session.commit()
-            current_user.customer_id = customer.id
-            db.session.commit()
+        stripe_customer = stripe.Customer.create(description=current_user.email,
+                                                 email=current_user.email,
+                                                 source=token["id"])
+
+        customer = Customer(stripe_id=stripe_customer["id"], user_id=current_user.id, card_id=token["card"]["id"])
+        db.session.add(customer)
+        db.session.commit()
+        current_user.customer_id = customer.id
+        db.session.commit()
 
         sub = stripe.Subscription.create(
             customer=customer.stripe_id,
-            billing_cycle_anchor=int(current_user.get_end_free_trial()),
-            trial_end=int(current_user.get_end_free_trial()),
+            billing_cycle_anchor=int(current_user.get_end_free_trial().timestamp()),
+            trial_end=int(current_user.get_end_free_trial().timestamp()),
             billing_thresholds={
                 "amount_gte": 500
             },
@@ -56,6 +57,10 @@ def create_stripe_account(current_user: User):
                 {
                     "price": "price_1KK3v8GHalnQ9em2kXER9gwj",
                     "quantity": current_user.get_accounts(),
+                },
+                {
+                    "price": "price_1KK3u2GHalnQ9em22sxu1rh9",
+                    "quantity": current_user.get_users(),
                 }
             ],
         )
