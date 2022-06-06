@@ -33,12 +33,13 @@ def user_registration():
     if not existing_email:
         """ If not existing create an account """
         user = User(email=data['email'], password=generate_password_hash(data["password"]))
-
         try:
             send_email("Welcome on our platform !", current_app.config['MAIL_DEFAULT_SENDER'], [user.email],
                        render_template('mail/welcome.html', user=user))
             db.session.add(user)
             db.session.commit()
+            user.create_stripe_customer()
+            user.register_default_events()
             current_app.logger.info(f'New account {user.email}')
             return response_wrapper('message', 'You are now registered ! You can log in !', 201)
         except Exception as e:
@@ -61,8 +62,8 @@ def login():
 
     user = User.query.filter_by(email=data["username"]).first()
     if not user:
-        current_app.logger.info('Login {} - Identifiants incorrects'.format(data["username"]))
-        return response_wrapper('message', 'Les identifiants saisis sont incorrects ! ', 401)
+        current_app.logger.info('Login {} - Mismatch between credentials'.format(data["username"]))
+        return response_wrapper('message', 'Mismatch between your credentials ! ', 401)
 
     if user.check_password(data["password"]):
         if user.is_confirmed == 0:
@@ -104,20 +105,32 @@ def get_end_free_trial(current_user: User):
 @auth.route('/user/settings', methods=['GET'])
 @partial(login_required)
 def get_user_data(current_user: User):
-    customer = Customer.query.filter_by(user_id=current_user.id).first()
+    if current_user.admin_id:
+        admin_account = User.query.filter_by(id=current_user.admin_id).first_or_404()
+        customer = Customer.query.filter_by(user_id=admin_account.id).first()
+    else:
+        customer = Customer.query.filter_by(user_id=current_user.id).first()
 
     card_info = None
-    if customer:
+    invoices = []
+    if customer.card_id:
         card_info = stripe.Customer.retrieve_source(
             customer.stripe_id,
             customer.card_id,
         )
+
+        stripe_invoices = stripe.Invoice.search(
+            query=f"customer:'{customer.stripe_id}'",
+        )
+        for invoice in stripe_invoices:
+            invoices.append(invoice)
 
     data = {
         "current_price": current_user.get_price(),
         "current_accounts": current_user.get_accounts(),
         "current_users": current_user.get_users(),
         "end_free_trial": current_user.get_end_free_trial(),
+        "invoices": invoices,
         "user": current_user.__dict__,
         "card": card_info
     }
@@ -156,7 +169,7 @@ def create_user(current_user: User):
                        render_template('mail/welcome_user.html', user=user, password=random_password))
             db.session.commit()
             current_app.logger.info(f'New account {user.email}')
-            return response_wrapper('message', 'Your new account is registered, you can log in !', 201)
+            return response_wrapper('message', 'Your new account is registered, a password has been sent to your email account, you can log in !', 201)
         except Exception as e:
             current_app.logger.warn(f'Error sending email to {user.email} {e}')
             return response_wrapper('message',

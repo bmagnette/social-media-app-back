@@ -8,27 +8,28 @@ from core.helpers.handlers import login_required, to_json, response_wrapper
 from core.libs.Oauth2.oauth import OAuthSignIn
 from core.models.Social.account_category import AccountCategory
 from core.models.Social.post import Post
-from core.models.Social.post_batch import PostBatch
+from core.models.calendar_event import CalendarEvent, EventType
 from core.models.user import User, UserType
 
-batch_router = Blueprint('batch', __name__)
+event_router = Blueprint('event', __name__)
 
 
-@batch_router.route("/batch", methods=["POST"])
+@event_router.route("/event", methods=["POST"])
 @partial(login_required, payment_required=True)
-def add_batch(current_user: User):
+def add_event(current_user: User):
     """
-    Si le batch s'envoie tout de suite alors envoyer tout de suite
+    Si l'event s'envoie tout de suite alors envoyer tout de suite
     Sinon enregistrer un Scheduler/Queue en attente.
     """
     data = request.get_json()
 
-    batch_params = {
+    event_params = {
         "author_id": current_user.id,
         "isScheduled": data["isScheduling"] if "isScheduling" in data else False,
         "schedule_date": datetime.fromisoformat(data["scheduleTime"][:-1]) if "isScheduling" in data else None,
     }
-    batch = PostBatch(**batch_params)
+
+    event = CalendarEvent(event_type=EventType.POST, **event_params)
 
     success_post_info = []
     for account in data["accounts"]:
@@ -43,12 +44,12 @@ def add_batch(current_user: User):
             "message": data["message"]
         })
 
-    db.session.add(batch)
+    db.session.add(event)
     db.session.commit()
 
     for post_info in success_post_info:
         post = Post(
-            batch_id=batch.id,
+            event_id=event.id,
             account_id=post_info["id"],
             type=post_info["social_type"],
             social_id=post_info["social_id"],
@@ -63,28 +64,28 @@ def add_batch(current_user: User):
     return response_wrapper('message', msg, 201)
 
 
-@batch_router.route("/batch/bulk_upload", methods=["POST"])
+@event_router.route("/event/bulk_upload", methods=["POST"])
 @partial(login_required, payment_required=True)
-def bulk_batch(current_user: User):
+def bulk_event(current_user: User):
     """
     Bulk upload
     """
     data = request.get_json()
 
     for message in data["messages"]:
-        batch_params = {
+        event_params = {
             "author_id": current_user.id,
             "isScheduled": True,
             "schedule_date": datetime.strptime(message['date'], '%d/%m/%Y %H:%M:%S'),
         }
 
-        batch = PostBatch(**batch_params)
+        event = CalendarEvent(event_type=EventType.POST, **event_params)
 
-        db.session.add(batch)
+        db.session.add(event)
         db.session.commit()
 
         post = Post(
-            batch_id=batch.id,
+            event_id=event.id,
             account_id=message["account"]["id"],
             type=message["account"]["social_type"],
             social_id=message["account"]["social_id"],
@@ -92,12 +93,12 @@ def bulk_batch(current_user: User):
             photo=message["image_url"]
         )
         db.session.add(post)
-        current_app.logger.info(f'{current_user.id} - Adding new message from BATCH {post.type}')
+        current_app.logger.info(f'{current_user.id} - Adding new message from event {post.type}')
         db.session.commit()
     return response_wrapper('message', 'Messages scheduled !', 201)
 
 
-@batch_router.route("/batch/bulk", methods=["POST"])
+@event_router.route("/event/bulk", methods=["POST"])
 @partial(login_required, payment_required=True)
 def bulk_file(current_user: User):
     file = request.files["file"]
@@ -123,54 +124,62 @@ def bulk_file(current_user: User):
         return response_wrapper('message', "Missing file", 404)
 
 
-@batch_router.route("/batch/<_id>", methods=["PUT"])
+@event_router.route("/event/<_id>", methods=["PUT"])
 @partial(login_required)
-def edit_batch(current_user: User, _id: int):
+def edit_event(current_user: User, _id: int):
     """
     TO IMPLEMENT
     """
+    data = request.get_json()
+
+    # On ne peut pas mettre une date dans le passé.
+    event = CalendarEvent.query.filter_by(id=_id).first_or_404()
+    event.schedule_date = data["startDate"]
+    event.isScheduled = True
+    db.session.commit()
+    return response_wrapper('message', "Missing file", 200)
 
 
-@batch_router.route("/batch/<_id>", methods=["DELETE"])
+@event_router.route("/event/<_id>", methods=["DELETE"])
 @partial(login_required)
-def remove_batch(current_user: User, _id: int):
-    posts = Post.query.filter_by(batch_id=_id).all()
-    batch = PostBatch.query.filter_by(id=_id).first_or_404()
+def remove_event(current_user: User, _id: int):
+    posts = Post.query.filter_by(event_id=_id).all()
+    event = CalendarEvent.query.filter_by(id=_id).first_or_404()
 
     for post in posts:
         db.session.delete(post)
 
-    db.session.delete(batch)
+    db.session.delete(event)
     db.session.commit()
     return response_wrapper('content', [], 200)
 
 
-@batch_router.route("/batch/<_id>", methods=["GET"])
+@event_router.route("/event/<_id>", methods=["GET"])
 @partial(login_required)
-def read_batch(current_user: User, _id: int):
-    batch = PostBatch.query.filter_by(id=_id).first_or_404()
-    return to_json(batch.__dict__), 200
+def read_event(current_user: User, _id: int):
+    event = CalendarEvent.query.filter_by(id=_id).first_or_404()
+    return to_json(event.__dict__), 200
 
 
-@batch_router.route("/batchs", methods=["GET"])
+@event_router.route("/events", methods=["GET"])
 @partial(login_required)
-def get_batchs(current_user: User):
+def get_events(current_user: User):
     res = []
-    batchs = []
+    events = []
 
     admin_id = current_user.id if current_user.user_type == UserType.ADMIN else current_user.admin_id
     users = User.query.filter_by(admin_id=admin_id).all()
-    admin_batch = PostBatch.query.filter_by(author_id=admin_id).all()
+    admin_event = CalendarEvent.query.filter_by(author_id=admin_id).all()
 
     id_list = [user.id for user in users]
-    batchs.extend(admin_batch)
+    events.extend(admin_event)
     for _id in id_list:
-        user_batch = PostBatch.query.filter_by(author_id=_id).all()
-        batchs.extend(user_batch)
+        user_event = CalendarEvent.query.filter_by(author_id=_id).all()
+        events.extend(user_event)
 
-    for batch in batchs:
-        posts = Post.query.filter_by(batch_id=batch.id).all()
-        temp_res = to_json(batch.__dict__)
+    for event in events:
+        posts = Post.query.filter_by(event_id=event.id).all()
+        temp_res = to_json(event.__dict__)
         temp_res["posts"] = []
         for post in posts:
             category = AccountCategory.query.filter_by(id=post.account.category_id).first()

@@ -94,8 +94,22 @@ class Customer(db.Model):
             ],
         )
 
-    def update_schedule(self):
-        print("update schedule")
+    def update_sub(self, user):
+        sub = stripe.Subscription.retrieve(
+            self.scheduler_id,
+        )
+
+        for item in sub["items"]["data"]:
+            if item["plan"]["id"] == "price_1KK3u2GHalnQ9em22sxu1rh9":
+                stripe.SubscriptionItem.modify(
+                    item["id"],
+                    quantity=user.get_users(),
+                )
+            if item["plan"]["id"] == "price_1L5Y3eGHalnQ9em2pncEzPbz":
+                stripe.SubscriptionItem.modify(
+                    item["id"],
+                    quantity=user.get_accounts(),
+                )
 
     def delete_schedule(self):
         print("delete schedule")

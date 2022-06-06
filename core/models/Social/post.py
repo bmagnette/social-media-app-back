@@ -8,8 +8,8 @@ class Post(db.Model):
 
     id = db.Column('id', db.Integer, primary_key=True)
 
-    batch_id = db.Column(db.Integer, db.ForeignKey('post_batch.batch_id'), nullable=False)
-    batch = db.relationship('PostBatch', back_populates="posts")
+    event_id = db.Column(db.Integer, db.ForeignKey('calendar_event.calendar_event_id'), nullable=False)
+    event = db.relationship('CalendarEvent', back_populates="posts")
 
     account_id = db.Column(db.Integer, db.ForeignKey('account.account_id'), nullable=False)
     account = db.relationship('Account', back_populates="posts")

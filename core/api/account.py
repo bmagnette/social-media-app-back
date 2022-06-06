@@ -1,12 +1,12 @@
 from functools import partial
 
 from flask import Blueprint, request
+from sqlalchemy import func
 
 from core.extensions import db
 from core.helpers.handlers import to_json, response_wrapper, login_required
 from core.models.Social.account import initiate_account, Account
 from core.models.Social.account_category import AccountCategory
-from core.models.Social.post_batch import PostBatch
 from core.models.user import User
 
 account_router = Blueprint('account', __name__)
@@ -20,8 +20,15 @@ def add_account(current_user: User):
     for account in data["accounts"]:
         existing_account = Account.query.filter_by(social_id=account["social_id"]).first()
         if existing_account:
-            return response_wrapper('message', "Account already existing in our service.", 400)
-        initiate_account(current_user, **account)
+            existing_account.access_token = account["access_token"]
+            existing_account.expired_in = account["expired_in"]
+            existing_account.updated_at = func.now()
+            if account["social_type"] == "TWITTER":
+                existing_account.refresh_token = account["refresh_token"]
+
+            db.session.commit()
+        else:
+            initiate_account(current_user, **account)
     return response_wrapper('message', "Le compte vient d'être associé.", 201)
 
 
@@ -40,14 +47,14 @@ def remove_account(current_user: User, _id: int):
     Delete an account
     """
     account = Account.query.filter_by(id=_id).first_or_404()
-    post_batchs = []
+    events = []
     for post in account.posts:
-        if post.batch not in post_batchs:
-            post_batchs.append(post.batch)
+        if post.event not in events:
+            events.append(post.event)
         db.session.delete(post)
 
-    for batch in post_batchs:
-        db.session.delete(batch)
+    for event in events:
+        db.session.delete(event)
 
     db.session.delete(account)
     db.session.commit()

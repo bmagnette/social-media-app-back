@@ -1,13 +1,18 @@
+import csv
 import enum
+import os
 import random
 import string
 from datetime import timedelta
 
+import stripe
 from sqlalchemy import ForeignKey, TIMESTAMP, func
 from werkzeug.security import check_password_hash
-
+from datetime import datetime
 from core.extensions import db
-from core.models.Social.account import accounts, Account
+from core.models.Social.account import accounts
+from core.models.Stripe.Customer import Customer
+from core.models.calendar_event import CalendarEvent, EventType
 
 
 class UserType(enum.Enum):
@@ -46,8 +51,7 @@ class User(db.Model):
     # categories = db.relationship('CategoryGroup')
 
     # One to Many
-    posted = db.relationship("PostBatch", back_populates="author")
-    invoices = db.relationship("Invoice", back_populates="user")
+    events = db.relationship("CalendarEvent", back_populates="author")
 
     sponsor_id = db.Column(db.String(15),
                            default=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
@@ -96,3 +100,46 @@ class User(db.Model):
 
     def is_admin(self):
         return self.user_type == UserType.ADMIN
+
+    def create_stripe_customer(self):
+        stripe_customer = stripe.Customer.create(description=self.email,
+                                                 email=self.email)
+
+        customer = Customer(stripe_id=stripe_customer["id"], user_id=self.id)
+        db.session.add(customer)
+        db.session.commit()
+        self.customer_id = customer.id
+        db.session.commit()
+
+        first_payment = int(self.get_end_free_trial().timestamp())
+
+        sub = stripe.Subscription.create(
+            customer=customer.stripe_id,
+            billing_cycle_anchor=first_payment,
+            trial_end=first_payment,
+            items=[
+                {
+                    "price": "price_1L5Y3eGHalnQ9em2pncEzPbz",
+                    "quantity": self.get_accounts(),
+                },
+                {
+                    "price": "price_1KK3u2GHalnQ9em22sxu1rh9",
+                    "quantity": self.get_users(),
+                }
+            ],
+        )
+        customer.scheduler_id = sub["id"]
+        db.session.commit()
+
+    def register_default_events(self):
+        directory = 'docs/calendar-events'
+        for filename in os.listdir(directory):
+            file = open(directory + "/" + filename)
+            csvreader = csv.reader(file)
+            next(csvreader)
+            for row in csvreader:
+                name, date = row[0], row[1]
+                format_date = datetime.strptime(date, "%m/%d/%Y")
+                event = CalendarEvent(author_id=self.id, event_type=EventType.DEFAULT, event_date=format_date, title=name)
+                db.session.add(event)
+            db.session.commit()

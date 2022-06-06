@@ -36,8 +36,8 @@ class FacebookSignIn(OAuthSignIn):
         # fb_info = self.get_user_info(access_token)
         # picture = self.get_picture(fb_info["id"], access_token)
 
-        pages = self.get_pages(access_token)
-        groups = self.get_groups(access_token)
+        pages = self.get_pages(access_token["access_token"])
+        groups = self.get_groups(access_token["access_token"])
 
         payload = {
             "accounts": [
@@ -68,13 +68,13 @@ class FacebookSignIn(OAuthSignIn):
 
         for group in groups["data"]:
             name, _id, icon = group["name"], group["id"], group["icon"]
-            picture = self.get_picture(_id, access_token)
+            picture = self.get_picture(_id, access_token["access_token"])
             payload["accounts"].append({
                 "social_type": MediaType.FACEBOOK_GROUP.value,
                 "social_id": _id,
                 "name": name,
                 "profile_picture": '',
-                "access_token": access_token,
+                "access_token": access_token["access_token"],
                 "expired_in": 60 * 24 * 60 * 90,  # in seconds
                 "profile_img": picture
             })
@@ -140,4 +140,5 @@ class FacebookSignIn(OAuthSignIn):
 
         resp = requests.get(self.access_token_url, params=params)
         resp.raise_for_status()
-        return resp.json()["access_token"]
+        response = resp.json()
+        return response

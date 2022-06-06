@@ -11,6 +11,7 @@ from sqlalchemy.orm.state import InstanceState
 
 from core.models.Social.account import Account
 from core.models.Social.account_category import AccountCategory, AccessType
+from core.models.Stripe.Customer import Customer
 from core.models.user import User
 
 
@@ -85,8 +86,13 @@ def login_required(f, payment_required=False):
             return response_wrapper('message', "Something went wrong, please log in again.", 401)
 
         current_user = User.query.filter_by(id=data["id"]).first_or_404()
+        if current_user.admin_id:
+            admin_account = User.query.filter_by(id=current_user.admin_id).first_or_404()
+            customer = Customer.query.filter_by(id=admin_account.customer_id).first_or_404()
+        else:
+            customer = Customer.query.filter_by(id=current_user.customer_id).first_or_404()
 
-        if current_user.get_price() != 0 and payment_required and not current_user.customer_id and current_user.get_end_free_trial() < datetime.now(
+        if current_user.get_price() != 0 and payment_required and not customer.card_id and current_user.get_end_free_trial() < datetime.now(
                 dt.timezone.utc):
             return response_wrapper('message', 'Payment Required, update your card info.', 402)
 

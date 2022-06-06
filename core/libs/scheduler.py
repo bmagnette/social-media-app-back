@@ -2,13 +2,12 @@ import datetime as dt
 from datetime import datetime
 
 import sqlalchemy
-import stripe
 from flask import current_app, render_template
 
 from core.helpers.handlers import to_json
 from core.libs.Oauth2.oauth import OAuthSignIn
 from core.libs.mailer import send_email
-from core.models.Social.post_batch import PostBatch
+from core.models.calendar_event import CalendarEvent
 from core.models.Stripe.Customer import Customer
 # Vérifier que le check pour obtenir les posts est correct.
 # Se connecter dans le scheduler
@@ -23,12 +22,12 @@ def post_cron(app):
     with app.app_context():
         today = datetime.now(dt.timezone.utc)
 
-        batches = PostBatch.query.filter(PostBatch.isScheduled == True,
-                                         sqlalchemy.extract('year', PostBatch.schedule_date) == today.year,
-                                         sqlalchemy.extract('month', PostBatch.schedule_date) == today.month,
-                                         sqlalchemy.extract('day', PostBatch.schedule_date) == today.day,
-                                         sqlalchemy.extract('hour', PostBatch.schedule_date) == today.hour,
-                                         sqlalchemy.extract('minute', PostBatch.schedule_date) == today.minute,
+        batches = CalendarEvent.query.filter(CalendarEvent.isScheduled == True,
+                                         sqlalchemy.extract('year', CalendarEvent.schedule_date) == today.year,
+                                         sqlalchemy.extract('month', CalendarEvent.schedule_date) == today.month,
+                                         sqlalchemy.extract('day', CalendarEvent.schedule_date) == today.day,
+                                         sqlalchemy.extract('hour', CalendarEvent.schedule_date) == today.hour,
+                                         sqlalchemy.extract('minute', CalendarEvent.schedule_date) == today.minute,
                                          ).all()
         app.logger.info(f"Running [{len(batches)}] - {today.hour}:{today.minute}")
 
@@ -44,22 +43,13 @@ def stripe_update(app):
     Update every day stripe account, to match usage with invoicing.
     """
     with app.app_context():
-        users = User.query.filter(User.customer_id is not None).all()
+        users = User.query.filter_by(admin_id=None).all()
         app.logger.info(f"Cron - Stripe Update subscription")
 
         for user in users:
             customer = Customer.query.filter_by(user_id=user.id).first_or_404()
-
-            sub = stripe.Subscription.retrieve(
-                customer.scheduler_id,
-            )
-
-            for item in sub["items"]["data"]:
-                stripe.SubscriptionItem.modify(
-                    item["id"],
-                    quantity=user.get_accounts(),
-                )
-            app.logger.info(f"Stripe Update")
+            customer.update_sub(user)
+            app.logger.info(f"Stripe Update for {user.last_name}")
 
         app.logger.info(f"Cron - Stripe Update subscription ended")
 

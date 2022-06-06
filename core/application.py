@@ -9,9 +9,8 @@ from dotenv import load_dotenv
 from flask import Flask
 
 from core.api.Stripe.customer import stripe_router
-from core.api.Stripe.invoices import invoice_router
 from core.api.account import account_router
-from core.api.batch import batch_router
+from core.api.event import event_router
 from core.api.category import category_router
 from core.api.oauth2 import oauth
 from core.api.user import auth
@@ -65,16 +64,16 @@ def create_app() -> Flask:
     app.config["MAIL_DEFAULT_SENDER"] = ('CronShot', os.environ["GMAIL_EMAIL"])
     app.config["MAIL_ASCII_ATTACHMENTS "] = True
     stripe.api_key = os.environ["STRIPE_SECRET"]
+    stripe.api_version = "2020-08-27"
     app.register_blueprint(oauth, url_prefix='/oauth')
     app.register_blueprint(auth)
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
-    app.register_blueprint(batch_router)
+    app.register_blueprint(event_router)
 
     app.register_blueprint(stripe_router, url_prefix='/stripe')
-    app.register_blueprint(invoice_router, url_prefix='/stripe')
 
-    #errors_handlers(app)
+    errors_handlers(app)
     register_extensions(app)
     register_models(app)
     register_schedulers(app)

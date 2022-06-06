@@ -55,6 +55,7 @@ class Account(db.Model):
     profile_img = db.Column(db.Text())
 
     created_at = db.Column(TIMESTAMP(True), server_default=func.now())
+    updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
     access_token = db.Column(db.String, nullable=False)
     refresh_token = db.Column(db.String, nullable=True)

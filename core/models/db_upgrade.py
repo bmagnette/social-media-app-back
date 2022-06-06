@@ -10,14 +10,6 @@ from pathlib import Path
 sys.path.append("C://Users/baptiste/social-media-scheduler/social-media-scheduler-back")
 from core.extensions import db
 
-from core.models.Social.account import accounts, MediaType, Account
-from core.models.Social.post import Post
-from core.models.Social.post_batch import PostBatch
-from core.models.Social.account_category import AccountCategory, categories
-from core.models.Stripe import Customer
-from core.models.Stripe import Invoice
-from core.models.user import UserType, UserType, User
-
 
 def create_app():
     dir_path = Path(os.path.dirname(os.path.realpath(__file__)))

@@ -28,8 +28,8 @@ class LinkedInSignIn(OAuthSignIn):
         state = request.args["state"]
 
         access_token = self.get_access_token(auth_code)
-        linkedin_info = self.get_user(access_token)
-        photo_uri = self.get_as_base64(self.get_photo(access_token))
+        linkedin_info = self.get_user(access_token["access_token"])
+        photo_uri = self.get_as_base64(self.get_photo(access_token["access_token"]))
 
         payload = {
             "accounts": [
@@ -38,8 +38,8 @@ class LinkedInSignIn(OAuthSignIn):
                     "social_id": linkedin_info["id"],
                     "name": linkedin_info["localizedLastName"] + " " + linkedin_info["localizedFirstName"],
                     "profile_picture": linkedin_info["profilePicture"]["displayImage"],
-                    "expired_in": 60 * 24 * 60 * 60,  # in seconds,
-                    "access_token": access_token,
+                    "expired_in": access_token["expires_in"],  # in seconds,
+                    "access_token": access_token["access_token"],
                     "profile_img": photo_uri.decode()
                 }
             ]
@@ -59,7 +59,7 @@ class LinkedInSignIn(OAuthSignIn):
         response = requests.post(self.access_token_url, data=data, timeout=30)
         response.raise_for_status()
         response = response.json()
-        return response['access_token']
+        return response
 
     def refresh_token(self):
         pass

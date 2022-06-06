@@ -33,42 +33,17 @@ def create_stripe_account(current_user: User):
         except CardError as e:
             return response_wrapper("message", e.error.message, 400)
 
-        if current_user.customer_id:
-            # Update card on user:
-            customer = Customer.query.filter_by(id=current_user.customer_id).first_or_404()
+        customer = Customer.query.filter_by(id=current_user.customer_id).first_or_404()
+
+        if customer.card_id:
             return response_wrapper('message', 'Not implemented yet.', 400)
 
-        stripe_customer = stripe.Customer.create(description=current_user.email,
-                                                 email=current_user.email,
-                                                 source=token["id"])
+        customer.card_id = token["card"]["id"]
 
-        customer = Customer(stripe_id=stripe_customer["id"], user_id=current_user.id, card_id=token["card"]["id"])
-        db.session.add(customer)
-        db.session.commit()
-        current_user.customer_id = customer.id
-        db.session.commit()
-
-        first_payment = int(current_user.get_end_free_trial().timestamp())
-        if first_payment <= int(datetime.utcnow().timestamp()):
-            first_payment = int((datetime.utcnow() + timedelta(days=1)).timestamp())
-
-        sub = stripe.Subscription.create(
-            customer=customer.stripe_id,
-            billing_cycle_anchor=first_payment,
-            trial_end=first_payment,
-            items=[
-                {
-                    "price": "price_1L5Y3eGHalnQ9em2pncEzPbz",
-                    "quantity": current_user.get_accounts(),
-                },
-                {
-                    "price": "price_1KK3u2GHalnQ9em22sxu1rh9",
-                    "quantity": current_user.get_users(),
-                }
-            ],
+        stripe.Customer.modify(
+            customer.stripe_id,
+            metadata={"source": token["id"]},
         )
-        customer.scheduler_id = sub["id"]
-        db.session.commit()
 
         return response_wrapper('message', 'Card added with success ! ', 201)
     except Exception as e:
