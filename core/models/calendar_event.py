@@ -27,8 +27,10 @@ class CalendarEvent(db.Model):
     updated_at = db.Column(TIMESTAMP(True), server_default=func.now())
 
     event_date = db.Column(TIMESTAMP(True), nullable=True)
+
     title = db.Column(db.String, nullable=True, default=None)
 
     schedule_date = db.Column(TIMESTAMP(True), nullable=True)
 
     isScheduled = db.Column(db.Boolean, default=False)
+    is_all_day = db.Column(db.Boolean, default=False)

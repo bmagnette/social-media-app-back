@@ -140,6 +140,6 @@ class User(db.Model):
             for row in csvreader:
                 name, date = row[0], row[1]
                 format_date = datetime.strptime(date, "%m/%d/%Y")
-                event = CalendarEvent(author_id=self.id, event_type=EventType.DEFAULT, event_date=format_date, title=name)
+                event = CalendarEvent(author_id=self.id, event_type=EventType.DEFAULT, event_date=format_date, title=name, is_all_day=True)
                 db.session.add(event)
             db.session.commit()
