@@ -120,8 +120,20 @@ class FacebookSignIn(OAuthSignIn):
         resp.raise_for_status()
         return resp.json()
 
-    def post(self, account, message):
-        url = f"{self.base_uri}/{account['social_id']}/feed?message={message}&access_token={account['access_token']}"
+    def post(self, account, message, images_urls):
+        """
+        POST TO FACEBOOK WALL
+        TO ADD -> &link=https://image.shutterstock.com/image-photo/macro-imagr-bee-beautiful-cosmos-600w-1282844236.jpg
+        Link to a website
+        """
+        media_to_add = ""
+        for i in range(0, len(images_urls), 1):
+            image_url = images_urls[i]
+            url = f"{self.base_uri}/{account.social_id}/photos?url={image_url}&published=false&access_token={account.access_token}"
+            resp = requests.post(url)
+            media_to_add = media_to_add + f"&attached_media[{i}]={{'media_fbid': '{resp.json()['id']}'}}"
+
+        url = f"{self.base_uri}/{account.social_id}/feed?message={message}{media_to_add}&access_token={account.access_token}"
         resp = requests.post(url)
         resp.raise_for_status()
         return resp.json()["id"]

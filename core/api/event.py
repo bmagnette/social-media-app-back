@@ -1,17 +1,49 @@
+import base64
 from datetime import datetime
 from functools import partial
 
+import requests
 from flask import Blueprint, request, current_app
 
 from core.extensions import db
 from core.helpers.handlers import login_required, to_json, response_wrapper
+from core.libs.AWS.file import upload_to_aws
 from core.libs.Oauth2.oauth import OAuthSignIn
 from core.models.Social.account_category import AccountCategory
-from core.models.Social.post import Post
+from core.models.Social.post import Post, PostStatus
 from core.models.calendar_event import CalendarEvent, EventType
 from core.models.user import User, UserType
 
 event_router = Blueprint('event', __name__)
+
+
+def get_media_selections(image_URLs, post, current_user):
+    """
+    Return array of bytes from images with different types and upload it to aws.
+    """
+    if current_user.admin_id:
+        current_user = User.query.filter_by(id=current_user.admin_id).first_or_404()
+
+    media_urls, media_b64 = [], []
+    for i in range(0, len(image_URLs), 1):
+        image = image_URLs[i]
+        if image.startswith("https"):
+            # Transform temp url coming from another source to a personal source.
+            resp = requests.get(url=image)
+            extension = '.' + resp.headers["Content-Type"].split('/')[1]
+
+            bucket = "multimedia-cronshot"
+            file_name = f'{post.id}_{i}{extension}'
+
+            if upload_to_aws('byte', resp.content, bucket, f'{current_user.id}/posts/{file_name}'):
+                media_link = f"https://{bucket}.s3.eu-west-3.amazonaws.com/{current_user.id}/posts/{file_name}"
+                media_urls.append(media_link)
+                media_b64.append(base64.b64encode(resp.content))
+        elif image.startswith("blob"):
+            # Blob come directly from user computer. Transfer it to bytes and upload to aws.
+            # TRANSFORM BLOB to Bytes and post it.
+            print("TODO")
+    return media_urls, media_b64
 
 
 @event_router.route("/event", methods=["POST"])
@@ -30,35 +62,41 @@ def add_event(current_user: User):
     }
 
     event = CalendarEvent(event_type=EventType.POST, **event_params)
-
-    success_post_info = []
-    for account in data["accounts"]:
-        _id = None
-        if "isScheduling" not in data:
-            _id = OAuthSignIn.get_provider(account["social_type"].lower()).post(account, data["message"])
-
-        success_post_info.append({
-            "id": account["id"],
-            "social_type": account["social_type"],
-            "social_id": _id,
-            "message": data["message"]
-        })
-
     db.session.add(event)
     db.session.commit()
 
-    for post_info in success_post_info:
+    posts = []
+    for _account in data["accounts"]:
         post = Post(
             event_id=event.id,
-            account_id=post_info["id"],
-            type=post_info["social_type"],
-            social_id=post_info["social_id"],
-            message=post_info["message"],
-            photo=''
+            account_id=_account["id"],
+            type=_account["social_type"],
+            social_id=_account["social_id"],
+            message=data["message"],
+            status=PostStatus.PROCESSING,
+            media_b64=[],
+            media_link=[],
         )
         db.session.add(post)
+        posts.append(post)
         current_app.logger.info(f'{current_user.id} - Adding new message {post.type}')
+    db.session.commit()
 
+    for post in posts:
+        _id = None
+        media_urls, media_b64 = [], []
+        if data["imageURLs"]:
+            media_urls, media_b64 = get_media_selections(data["imageURLs"], post, current_user)
+
+        if "isScheduling" not in data:
+            _id = OAuthSignIn.get_provider(post.type.lower()).post(post.account, data["message"], media_urls)
+            post.social_id = _id
+            post.status = PostStatus.POSTED
+        else:
+            post.status = PostStatus.SCHEDULED
+
+        post.media_link = media_urls
+        post.media_b64 = media_b64
     db.session.commit()
     msg = "Message scheduled !" if "isScheduling" in data else 'Message sent'
     return response_wrapper('message', msg, 201)

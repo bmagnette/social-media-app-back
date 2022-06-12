@@ -13,6 +13,7 @@ from core.api.account import account_router
 from core.api.event import event_router
 from core.api.category import category_router
 from core.api.oauth2 import oauth
+from core.api.unsplash.unsplash import unsplash
 from core.api.user import auth
 from core.extensions import mail, db, cors, scheduler, migrate
 from core.helpers.handlers import errors_handlers
@@ -40,7 +41,6 @@ def create_app() -> Flask:
     app.config["MAIL_PASSWORD"] = os.environ["GMAIL_PASSWORD"]
     app.config["MAIL_USERNAME"] = os.environ["GMAIL_EMAIL"]
     app.config["STRIPE_SECRET"] = os.environ["STRIPE_SECRET"]
-
     app.config['OAUTH_CREDENTIALS'] = {
         'facebook': {
             'id': os.environ["FACEBOOK_CLIENT_ID"],
@@ -70,6 +70,7 @@ def create_app() -> Flask:
     app.register_blueprint(account_router)
     app.register_blueprint(category_router)
     app.register_blueprint(event_router)
+    app.register_blueprint(unsplash)
 
     app.register_blueprint(stripe_router, url_prefix='/stripe')
 

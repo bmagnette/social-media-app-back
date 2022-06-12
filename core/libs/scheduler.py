@@ -22,19 +22,19 @@ def post_cron(app):
     with app.app_context():
         today = datetime.now(dt.timezone.utc)
 
-        batches = CalendarEvent.query.filter(CalendarEvent.isScheduled == True,
+        events = CalendarEvent.query.filter(CalendarEvent.isScheduled == True,
                                          sqlalchemy.extract('year', CalendarEvent.schedule_date) == today.year,
                                          sqlalchemy.extract('month', CalendarEvent.schedule_date) == today.month,
                                          sqlalchemy.extract('day', CalendarEvent.schedule_date) == today.day,
                                          sqlalchemy.extract('hour', CalendarEvent.schedule_date) == today.hour,
                                          sqlalchemy.extract('minute', CalendarEvent.schedule_date) == today.minute,
                                          ).all()
-        app.logger.info(f"Running [{len(batches)}] - {today.hour}:{today.minute}")
+        app.logger.info(f"Running [{len(events)}] - {today.hour}:{today.minute}")
 
-        for batch in batches:
-            for post in batch.posts:
-                _type = post.account.social_type.lower()
-                OAuthSignIn(_type).get_provider(_type).post(to_json(post.account.__dict__), post.message)
+        for event in events:
+            for post in event.posts:
+                _type = post.type.lower()
+                OAuthSignIn.get_provider(_type).post(post.account, post.message, post.media_link)
                 app.logger.info(f"Sent one cron")
 
 
